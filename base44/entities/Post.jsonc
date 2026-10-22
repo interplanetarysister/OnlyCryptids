@@ -94,6 +94,18 @@
     },
     "source_url": {
       "type": "string"
+    },
+    "section": {
+      "type": "string"
+    },
+    "deep_category": {
+      "type": "string"
+    },
+    "hashtags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "rls": {
