@@ -23,7 +23,7 @@ App ID: `6ad9e37246a8642469c8c9fb` — Unrewound's Workspace. The deployed app h
 
 GitHub: https://github.com/interplanetarysister/OnlyCryptids
 
-Base44's connected editor now reads the actual repository source. The three editorial profile records and their free fiction introductions have been converted in the remote app data. This batch still requires its Base44 checkpoint/build and runtime verification before claiming it is deployed. Public publication is a separate step.
+Base44's connected editor now reads the actual repository source. The three editorial profile records and their free fiction introductions have been converted in the remote app data. The batch is saved in the connected Base44 sandbox and checkpoint `6ada2a3829e4b73c31c6c089` at commit `410285becb15530ebcea4c68d3080bbc31760ceb`. Its production build, 64 isolated API scenarios and six internal-link checks passed there. The hosted backend still returned the older API during runtime verification, so live deployment is not confirmed. Public publication is a separate step. Three paused platform supporter offers are saved at 20, 16 and 24 Suffering per 30 days; each designates Interplanetary Association as beneficiary for moderation costs.
 
 The source passes the production build and focused isolated API/link checks. Tests use a fake database and make no authentication-provider, payment or generation calls. Real checkout, credit funding/spending, automatic renewals, creator payouts, AI generation, merchandise sales, and MFA enrollment are not active. No real customer payment or test entitlement has been created.
 
