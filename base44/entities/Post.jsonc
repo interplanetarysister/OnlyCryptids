@@ -61,6 +61,21 @@
     },
     "subcategory": {
       "type": "string"
+    },
+    "quality_tracks": {
+      "type": "integer"
+    },
+    "evidence_tracks": {
+      "type": "integer"
+    },
+    "review_version": {
+      "type": "string"
+    },
+    "review_state": {
+      "type": "string"
+    },
+    "review_notes": {
+      "type": "string"
     }
   },
   "rls": {
