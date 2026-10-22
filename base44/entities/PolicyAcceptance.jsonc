@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "name": "PolicyAcceptance",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "agreements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "accepted_at": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}

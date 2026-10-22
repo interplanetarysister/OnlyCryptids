@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "name": "PlatformSettings",
+  "properties": {
+    "legal_owner": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "copyright_contact": {
+      "type": "string"
+    },
+    "publication_year": {
+      "type": "integer"
+    },
+    "payment_status": {
+      "type": "string"
+    },
+    "media_enabled": {
+      "type": "boolean"
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "legal_address": {
+      "type": "string"
+    },
+    "governing_jurisdiction": {
+      "type": "string"
+    },
+    "legal_license_enabled": {
+      "type": "boolean"
+    },
+    "legal_review_status": {
+      "type": "string"
+    },
+    "creator_share_basis_points": {
+      "type": "integer"
+    },
+    "legal_document_type": {
+      "type": "string",
+      "enum": [
+        "copyright-assignment"
+      ]
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}

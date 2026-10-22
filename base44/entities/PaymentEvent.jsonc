@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "name": "PaymentEvent",
+  "properties": {
+    "provider_event_id": {
+      "type": "string"
+    },
+    "verified": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}

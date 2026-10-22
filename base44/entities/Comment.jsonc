@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "name": "Comment",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "post_id": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "license_signature_id": {
+      "type": "string"
+    },
+    "license_version": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}

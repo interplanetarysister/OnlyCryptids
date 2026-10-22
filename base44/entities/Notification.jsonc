@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "name": "Notification",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "read": {
+      "type": "boolean"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}

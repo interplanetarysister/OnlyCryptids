@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "name": "AuditEvent",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "action": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "details": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}

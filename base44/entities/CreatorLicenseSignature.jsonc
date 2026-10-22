@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "name": "CreatorLicenseSignature",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "legal_name": {
+      "type": "string"
+    },
+    "represented_holder": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "agreement_hash": {
+      "type": "string"
+    },
+    "agreement_text": {
+      "type": "string"
+    },
+    "signed_at": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "operator_name": {
+      "type": "string"
+    },
+    "creator_share_basis_points": {
+      "type": "integer"
+    },
+    "acknowledgments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}

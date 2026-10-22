@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "name": "CopyrightComplaint",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "work": {
+      "type": "string"
+    },
+    "urls": {
+      "type": "string"
+    },
+    "contact": {
+      "type": "string"
+    },
+    "signature": {
+      "type": "string"
+    },
+    "good_faith": {
+      "type": "boolean"
+    },
+    "accurate": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}

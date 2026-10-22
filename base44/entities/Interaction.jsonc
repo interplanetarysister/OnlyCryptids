@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "name": "Interaction",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "target_id": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}
