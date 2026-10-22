@@ -1,0 +1,10 @@
+{
+  "name": "UserBlock", "type": "object",
+  "properties": {
+    "user_id": {"type": "string"},
+    "target_user_id": {"type": "string"},
+    "display_name": {"type": "string"}
+  },
+  "required": ["user_id", "target_user_id"],
+  "rls": {"create": false, "read": false, "update": false, "delete": false}
+}

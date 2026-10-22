@@ -1,0 +1,66 @@
+{
+  "name": "Post",
+  "type": "object",
+  "properties": {
+    "creator_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "teaser": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "format": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "visibility": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "integer"
+    },
+    "rights_confirmed": {
+      "type": "boolean"
+    },
+    "media_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "license_signature_id": {
+      "type": "string"
+    },
+    "license_version": {
+      "type": "string"
+    },
+    "demo": {
+      "type": "boolean"
+    },
+    "scene": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}

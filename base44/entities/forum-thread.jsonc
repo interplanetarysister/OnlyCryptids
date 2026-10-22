@@ -1,0 +1,16 @@
+{
+  "name": "ForumThread", "type": "object",
+  "properties": {
+    "user_id": {"type": "string"},
+    "title": {"type": "string"},
+    "body": {"type": "string"},
+    "category": {"type": "string"},
+    "label": {"type": "string"},
+    "display_name": {"type": "string"},
+    "status": {"type": "string", "enum": ["published", "hidden", "removed"]},
+    "license_signature_id": {"type": "string"},
+    "license_version": {"type": "string"}
+  },
+  "required": ["user_id", "title", "body", "status"],
+  "rls": {"create": false, "read": false, "update": false, "delete": false}
+}

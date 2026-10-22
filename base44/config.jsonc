@@ -1,0 +1,1 @@
+{"name":"Only Cryptids","description":"Cryptid creator subscriptions, encounters, art, and field notes.","entitiesDir":"./entities","functionsDir":"./functions","site":{"installCommand":"npm ci","buildCommand":"npm run build","serveCommand":"npm run dev","outputDirectory":"./dist"}}

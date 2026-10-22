@@ -1,0 +1,33 @@
+{
+  "name": "MediaAsset",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "post_id": {
+      "type": "string"
+    },
+    "file_uri": {
+      "type": "string"
+    },
+    "mime_type": {
+      "type": "string"
+    },
+    "alt": {
+      "type": "string"
+    },
+    "sha256": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}
