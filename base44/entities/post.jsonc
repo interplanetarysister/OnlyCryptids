@@ -55,6 +55,39 @@
     },
     "scene": {
       "type": "string"
+    },
+    "sighting_enabled": {
+      "type": "boolean"
+    },
+    "sighting_latitude": {
+      "type": "number"
+    },
+    "sighting_longitude": {
+      "type": "number"
+    },
+    "sighting_precision": {
+      "type": "string"
+    },
+    "sighting_place": {
+      "type": "string"
+    },
+    "encounter_date": {
+      "type": "string"
+    },
+    "sighting_firsthand": {
+      "type": "boolean"
+    },
+    "observation_context": {
+      "type": "string"
+    },
+    "evidence_notes": {
+      "type": "string"
+    },
+    "alternative_explanations": {
+      "type": "string"
+    },
+    "source_url": {
+      "type": "string"
     }
   },
   "rls": {
