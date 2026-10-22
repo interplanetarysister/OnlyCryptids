@@ -183,4 +183,24 @@ result=await run('plan-save',{name:'Verified paid offer',price_suffering:20,stat
 assert.equal(result.status,200);assert.equal(result.writes[0].entity,'CreatorPlan');
 result=await run('plan-save',{name:'Replay attempt',price_suffering:20,status:'active',mfa_verified:true},{agreementReady:true,headers:{authorization:'Bearer another-test-session'},tables:{Creator:[{...creatorRow,user_id:'reader'}],CreatorLicenseSignature:[signed],CreatorVerification:[verification]}});
 assert.equal(result.status,403);assert.equal(result.writes.length,0);
+// Encounter pin ownership, truthful labeling, coordinate minimization and access boundaries.
+const pin={post_id:'p1',enabled:true,latitude:45.123456,longitude:-122.456789,encounter_date:'2020-01-15',place:'Public forest trail',firsthand:true,public_location:true};
+const encounter={...creatorRow,id:'p1',user_id:'reader',creator_id:'creator1',status:'published',label:'Claimed Encounter',visibility:'premium',body:'paid secret',title:'Forest encounter',teaser:'Public preview',category:'Bigfoot',sighting_enabled:true,sighting_firsthand:true,sighting_latitude:45.1,sighting_longitude:-122.5,sighting_precision:'approximate'};
+result=await run('sighting-save',pin,{post:encounter,tables:{Creator:[creatorRow]}});
+assert.equal(result.status,200);assert.equal(result.writes[0].fields.sighting_latitude,45.1);assert.equal(result.writes[0].fields.sighting_longitude,-122.5);assert.ok(!JSON.stringify(result.writes).includes('45.123456'));
+result=await run('sighting-save',{...pin,precision:'exact'},{post:encounter,tables:{Creator:[creatorRow]}});
+assert.equal(result.status,200);assert.equal(result.writes[0].fields.sighting_latitude,45.12346);
+for(const [payload,post,user,status] of [[pin,encounter,null,401],[pin,{...encounter,user_id:'other'},{id:'reader'},403],[pin,{...encounter,label:'Fiction'},{id:'reader'},409],[pin,{...encounter,status:'draft'},{id:'reader'},409],[{...pin,latitude:Infinity},encounter,{id:'reader'},400],[{...pin,longitude:181},encounter,{id:'reader'},400],[{...pin,firsthand:false},encounter,{id:'reader'},400],[{...pin,public_location:false},encounter,{id:'reader'},400],[{...pin,encounter_date:'2020-02-31'},encounter,{id:'reader'},400],[{...pin,encounter_date:'2999-01-01'},encounter,{id:'reader'},400]]){
+ result=await run('sighting-save',payload,{post,user,tables:{Creator:[creatorRow]}});assert.equal(result.status,status);assert.equal(result.writes.length,0);
+}
+result=await run('sighting-list',{}, {user:null,post:encounter,tables:{Creator:[creatorRow]}});
+assert.equal(result.status,200);assert.equal(result.data.sightings.length,1);assert.equal(result.data.sightings[0].post_id,'p1');assert.ok(!JSON.stringify(result.data).includes('paid secret'));
+result=await run('sighting-list',{}, {post:{...encounter,status:'hidden'},tables:{Creator:[creatorRow]}});
+assert.equal(result.data.sightings.length,0);
+result=await run('sighting-list',{}, {user:{id:'viewer',role:'user'},post:encounter,tables:{Creator:[creatorRow],UserBlock:[{user_id:'viewer',target_user_id:'reader'}]}});
+assert.equal(result.data.sightings.length,0);
+result=await run('sighting-save',{post_id:'p1',enabled:false},{post:encounter});
+assert.equal(result.status,200);assert.equal(result.writes[0].fields.sighting_enabled,false);assert.equal(result.writes[0].fields.sighting_latitude,0);
+result=await run('post-save',{...ordinaryPost,id:'p1',creator_id:'creator1'},{agreementReady:true,post:encounter,tables:{Creator:[{...creatorRow,user_id:'reader'}],CreatorLicenseSignature:[signed]}});
+assert.equal(result.status,200);assert.equal(result.writes.find(w=>w.entity==='Post').fields.sighting_enabled,false);
 console.log(`${scenarioCount} API scenarios and 6 internal-link checks passed; no external services invoked.`);
