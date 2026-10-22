@@ -1,3 +1,4 @@
+// Only Cryptids: authoritative access, community and Suffering offer API.
 import {createClientFromRequest} from 'npm:@base44/sdk';
 import {licenseVersion,renderCreatorLicense,licenseReady} from './license.js';
 import {creditPolicy,creditPacks,creditCost} from './economy.js';

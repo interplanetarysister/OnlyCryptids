@@ -1,0 +1,43 @@
+{
+  "name": "Creator",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "handle": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number"
+    },
+    "color": {
+      "type": "string"
+    },
+    "avatar": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "demo": {
+      "type": "boolean"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": []
+}
