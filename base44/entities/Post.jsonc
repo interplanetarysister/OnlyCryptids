@@ -62,19 +62,37 @@
     "subcategory": {
       "type": "string"
     },
-    "quality_tracks": {
-      "type": "integer"
+    "sighting_enabled": {
+      "type": "boolean"
     },
-    "evidence_tracks": {
-      "type": "integer"
+    "sighting_latitude": {
+      "type": "number"
     },
-    "review_version": {
+    "sighting_longitude": {
+      "type": "number"
+    },
+    "sighting_precision": {
       "type": "string"
     },
-    "review_state": {
+    "sighting_place": {
       "type": "string"
     },
-    "review_notes": {
+    "encounter_date": {
+      "type": "string"
+    },
+    "sighting_firsthand": {
+      "type": "boolean"
+    },
+    "observation_context": {
+      "type": "string"
+    },
+    "evidence_notes": {
+      "type": "string"
+    },
+    "alternative_explanations": {
+      "type": "string"
+    },
+    "source_url": {
       "type": "string"
     }
   },
