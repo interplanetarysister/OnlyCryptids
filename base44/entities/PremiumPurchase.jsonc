@@ -1,29 +1,29 @@
 {
-  "name": "CopyrightComplaint",
+  "name": "PremiumPurchase",
   "type": "object",
   "properties": {
     "user_id": {
       "type": "string"
     },
-    "work": {
+    "post_id": {
       "type": "string"
     },
-    "urls": {
+    "creator_id": {
       "type": "string"
-    },
-    "contact": {
-      "type": "string"
-    },
-    "signature": {
-      "type": "string"
-    },
-    "good_faith": {
-      "type": "boolean"
-    },
-    "accurate": {
-      "type": "boolean"
     },
     "status": {
+      "type": "string"
+    },
+    "verified_payment": {
+      "type": "boolean"
+    },
+    "price_suffering": {
+      "type": "integer"
+    },
+    "ledger_transaction_id": {
+      "type": "string"
+    },
+    "policy_version": {
       "type": "string"
     }
   },

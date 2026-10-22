@@ -1,38 +1,38 @@
 {
-  "name": "Creator",
+  "name": "Community",
   "type": "object",
   "properties": {
     "user_id": {
       "type": "string"
     },
-    "display_name": {
+    "name": {
       "type": "string"
     },
-    "handle": {
+    "slug": {
       "type": "string"
     },
-    "bio": {
+    "description": {
       "type": "string"
     },
-    "category": {
-      "type": "string"
-    },
-    "price": {
-      "type": "number"
-    },
-    "color": {
-      "type": "string"
-    },
-    "avatar": {
+    "rules": {
       "type": "string"
     },
     "status": {
       "type": "string"
     },
-    "demo": {
-      "type": "boolean"
+    "license_signature_id": {
+      "type": "string"
+    },
+    "license_version": {
+      "type": "string"
     }
   },
+  "required": [
+    "user_id",
+    "name",
+    "slug",
+    "status"
+  ],
   "rls": {
     "create": false,
     "read": false,

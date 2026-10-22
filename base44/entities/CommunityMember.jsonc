@@ -1,0 +1,41 @@
+{
+  "name": "CommunityMember",
+  "type": "object",
+  "properties": {
+    "community_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "member",
+        "moderator"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "banned"
+      ]
+    }
+  },
+  "required": [
+    "community_id",
+    "user_id",
+    "role",
+    "status"
+  ],
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}

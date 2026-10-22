@@ -19,6 +19,21 @@
     },
     "verified_payment": {
       "type": "boolean"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "plan_revision": {
+      "type": "integer"
+    },
+    "price_suffering": {
+      "type": "integer"
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "ledger_transaction_id": {
+      "type": "string"
     }
   },
   "rls": {

@@ -4,11 +4,16 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {transformWithOxc} from 'vite';
+import {creditPolicy,creditPacks,creditCost} from '../base44/functions/cryptid-api/economy.js';
+import {parseContentHash,internalContentLink} from '../src/content-links.js';
+import {cryptidTaxonomy,validSubcategory} from '../base44/functions/cryptid-api/taxonomy.js';
 
 let source=await readFile(new URL('../base44/functions/cryptid-api/index.ts',import.meta.url),'utf8');
 source=source.replace(/^import .*;\n/gm,'');
 const compiled=await transformWithOxc(source,'index.ts',{lang:'ts'});
+let scenarioCount=0;
 async function run(action,payload={},options={}){
+ scenarioCount++;
  let handler;const writes=[];
  const user=Object.hasOwn(options,'user')?options.user:{id:'reader',role:'user'};
  const post={id:'p1',user_id:'author',creator_id:'creator1',status:'published',visibility:'free',body:'protected body',...options.post};
@@ -20,12 +25,13 @@ async function run(action,payload={},options={}){
   filter:async(query,sort,limit=1000,skip=0)=>(tables[entity]||[]).filter(row=>Object.entries(query).every(([key,value])=>row[key]===value)).slice(skip,skip+limit),
   update:async(id,fields)=>{writes.push({entity,id,fields});return {...fields,id}},
   create:async(fields)=>{writes.push({entity,fields});return {...fields,id:'new'}},
+  delete:async(id)=>{writes.push({entity,id,deleted:true})},
  })});
  const sandbox={Deno:{serve:fn=>{handler=fn}},Response,TextEncoder,crypto:webcrypto,console,
-  createClientFromRequest:()=>({auth:{me:async()=>user},asServiceRole:{entities:db}}),
-  renderCreatorLicense:()=>'',licenseReady:()=>options.agreementReady===true,licenseVersion:'test'};
+  createClientFromRequest:()=>({auth:{me:async()=>user,loginViaEmailPassword:async()=>{if(options.loginResponse)return options.loginResponse;throw new Error('Invalid credentials')}},asServiceRole:{entities:db}}),
+  renderCreatorLicense:()=>'',licenseReady:()=>options.agreementReady===true,licenseVersion:'test',creditPolicy,creditPacks,creditCost,cryptidTaxonomy,validSubcategory};
  vm.runInNewContext(compiled.code,sandbox);
- const response=await handler(new Request('https://example.invalid',{method:'POST',body:JSON.stringify({action,...payload})}));
+ const response=await handler(new Request('https://example.invalid',{method:'POST',headers:options.headers,body:JSON.stringify({action,...payload})}));
  return {status:response.status,data:await response.json(),writes};
 }
 let result=await run('comment-remove',{id:'c1'});
@@ -93,4 +99,88 @@ result=await run('forum-list',{}, {tables:{ForumThread:Array.from({length:21},(_
 assert.equal(result.data.threads.length,20);assert.equal(result.data.next_offset,20);
 result=await run('forum-create',{title:'Title',body:'Body'}, {agreementReady:true,tables:{CreatorLicenseSignature:[{...signed,version:'old-version'}]}});
 assert.equal(result.status,403);assert.equal(result.writes.length,0);
-console.log('30 authorization and forum checks passed; no external services invoked.');
+const plan={id:'plan1',user_id:'author',creator_id:'creator1',name:'Field Notes',price_suffering:20,period_days:30,status:'active',revision:2};
+const creatorRow={id:'creator1',user_id:'author',status:'active'};
+result=await run('purchase-quote',{kind:'subscription',plan_id:'plan1',price_suffering:1},{tables:{CreatorPlan:[plan],Creator:[creatorRow]}});
+assert.equal(result.status,200);assert.equal(result.data.units,20);assert.equal(result.data.priceCents,500);assert.equal(result.data.checkout_enabled,false);assert.equal(result.writes.length,0);
+result=await run('purchase-quote',{kind:'credits',pack_id:'suffering-100'});
+assert.equal(result.data.priceCents,2500);assert.equal(result.writes.length,0);
+result=await run('purchase',{kind:'subscription',plan_id:'plan1',balance:999999,verified_payment:true});
+assert.equal(result.status,503);assert.equal(result.writes.length,0);
+result=await run('plan-save',{id:'plan1',name:'Hijacked',price_suffering:1},{tables:{CreatorPlan:[plan],Creator:[{...creatorRow,user_id:'reader'}]}});
+assert.equal(result.status,404);assert.equal(result.writes.length,0);
+result=await run('plan-save',{name:'My plan',price_suffering:20,user_id:'victim',status:'paused'}, {tables:{Creator:[{...creatorRow,user_id:'reader'}]}});
+assert.equal(result.status,200);assert.equal(result.writes[0].fields.user_id,'reader');assert.equal(result.writes[0].fields.period_days,30);
+result=await run('post',{id:'p1'},{post:{visibility:'premium',price_suffering:10},tables:{Subscription:[{user_id:'reader',creator_id:'creator1',verified_payment:true,status:'active',expires_at:'2099-01-01'}]}});
+assert.equal(result.status,403);
+result=await run('post',{id:'p1'},{post:{visibility:'premium'},tables:{PremiumPurchase:[{user_id:'reader',post_id:'p1',creator_id:'another',status:'completed',verified_payment:true,ledger_transaction_id:'tx1'}]}});
+assert.equal(result.status,403);
+result=await run('post',{id:'p1'},{post:{visibility:'premium'},tables:{PremiumPurchase:[{user_id:'reader',post_id:'p1',creator_id:'creator1',status:'completed',verified_payment:true,ledger_transaction_id:'tx1'}]}});
+assert.equal(result.status,200);
+const group={id:'group1',user_id:'owner',name:'Mothman',slug:'mothman',status:'active'};
+const moderator={id:'m1',community_id:'group1',user_id:'reader',role:'moderator',status:'active'};
+const groupTables={Community:[group],ForumThread:[{...thread,community_id:'group1'}],CommunityMember:[moderator,{id:'m2',community_id:'group1',user_id:'other',role:'member',status:'active'}]};
+result=await run('community-moderate',{thread_id:'t1',decision:'lock'}, {tables:groupTables});
+assert.equal(result.status,200);assert.equal(result.writes[0].fields.locked,true);
+result=await run('community-moderate',{thread_id:'t1',decision:'lock'}, {tables:groupTables,user:{id:'stranger',role:'user'}});
+assert.equal(result.status,403);assert.equal(result.writes.length,0);
+result=await run('community-moderate',{thread_id:'t1',decision:'lock'}, {tables:{...groupTables,CommunityMember:[{...moderator,community_id:'other-group'}]}});
+assert.equal(result.status,403);assert.equal(result.writes.length,0);
+result=await run('community-member-update',{community_id:'group1',member_id:'m2',decision:'promote'}, {tables:groupTables});
+assert.equal(result.status,403);assert.equal(result.writes.length,0);
+result=await run('community-member-update',{community_id:'group1',member_id:'m2',decision:'promote'}, {tables:groupTables,user:{id:'owner',role:'user'}});
+assert.equal(result.status,200);assert.equal(result.writes[0].fields.role,'moderator');
+result=await run('community-join',{id:'group1',accept_rules:true}, {tables:{Community:[group],CommunityMember:[{...moderator,status:'banned'}]}});
+assert.equal(result.status,403);assert.equal(result.writes.length,0);
+result=await run('forum-reply',{thread_id:'t1',body:'Bypass lock'}, {tables:{ForumThread:[{...thread,locked:true}]},agreementReady:true});
+assert.equal(result.status,403);assert.equal(result.writes.length,0);
+result=await run('community-modqueue',{id:'group1'}, {tables:groupTables,user:{id:'other',role:'user'}});
+assert.equal(result.status,403);
+result=await run('community-moderate',{thread_id:'t1',report_id:'report1',decision:'hide'}, {tables:{...groupTables,Report:[{id:'report1',community_id:'another',forum_thread_id:'t1'}]}});
+assert.equal(result.status,404);assert.equal(result.writes.length,0);
+result=await run('comment',{post_id:'p1',body:'Reply',parent_comment_id:'c1'}, {agreementReady:true,tables:{CreatorLicenseSignature:[signed],Comment:[{id:'c1',post_id:'another',status:'visible'}]}});
+assert.equal(result.status,404);assert.equal(result.writes.length,0);
+result=await run('comments',{post_id:'p1'},{post:{visibility:'premium'}});
+assert.equal(result.status,403);assert.equal(result.data.comments,undefined);
+assert.deepEqual(parseContentHash('#post=p1'),{kind:'post',id:'p1'});
+assert.equal(parseContentHash('#post=%3Cscript%3E'),null);
+assert.equal(internalContentLink('https://example.invalid/#post=p1','https://only-cryptids-69c8c9fb.base44.app'),null);
+assert.equal(internalContentLink('javascript:alert(1)','https://only-cryptids-69c8c9fb.base44.app'),null);
+assert.equal(internalContentLink('https://only-cryptids-69c8c9fb.base44.app.evil.invalid/#post=p1','https://only-cryptids-69c8c9fb.base44.app'),null);
+assert.equal(internalContentLink('https://only-cryptids-69c8c9fb.base44.app/#thread=t1','https://only-cryptids-69c8c9fb.base44.app'),'#thread=t1');
+result=await run('plan-save',{name:'Paid plan',price_suffering:20,status:'active'},{agreementReady:true,tables:{Creator:[{...creatorRow,user_id:'reader'}],CreatorLicenseSignature:[signed]}});
+assert.equal(result.status,403);assert.equal(result.writes.length,0);
+const ordinaryPost={title:'My first story',teaser:'Public teaser',body:'Original fiction',category:'Bigfoot',subcategory:'Sasquatch / Pacific Northwest',label:'Fiction',visibility:'free',status:'published',rights_confirmed:true};
+result=await run('post-save',ordinaryPost,{agreementReady:true,tables:{Creator:[{...creatorRow,user_id:'reader'}],CreatorLicenseSignature:[signed]}});
+assert.equal(result.status,200);assert.equal(result.writes.find(w=>w.entity==='Post').fields.subcategory,'Sasquatch / Pacific Northwest');
+result=await run('post-save',{...ordinaryPost,subcategory:'Loch Ness monster'},{agreementReady:true,tables:{Creator:[{...creatorRow,user_id:'reader'}],CreatorLicenseSignature:[signed]}});
+assert.equal(result.status,400);assert.equal(result.writes.length,0);
+const platformCreator={...creatorRow,user_id:'platform-pine',platform_owned:true,display_name:'The Pine Watch'};
+result=await run('post-save',{...ordinaryPost,creator_id:'creator1'},{user:{id:'admin',role:'admin'},tables:{Creator:[platformCreator]}});
+assert.equal(result.status,200);assert.equal(result.writes[0].fields.user_id,'platform-pine');
+result=await run('post-save',{...ordinaryPost,creator_id:'creator1'},{agreementReady:true,tables:{Creator:[platformCreator],CreatorLicenseSignature:[signed]}});
+assert.equal(result.status,403);assert.equal(result.writes.length,0);
+result=await run('purchase-quote',{kind:'subscription',plan_id:'plan1',beneficiary_name:'Attacker'},{tables:{CreatorPlan:[plan],Creator:[platformCreator]}});
+assert.equal(result.status,200);assert.equal(result.data.beneficiary_name,'Interplanetary Association');assert.equal(result.data.revenue_purpose,'moderation_costs');
+result=await run('community-modqueue',{id:'group1'},{tables:{...groupTables,Report:[{id:'private-escalation',community_id:'group1',destination:'platform',status:'open'}]}});
+assert.equal(result.status,200);assert.equal(result.data.reports.length,0);
+result=await run('community-moderate',{thread_id:'t1',report_id:'private-escalation',decision:'dismiss'},{tables:{...groupTables,Report:[{id:'private-escalation',community_id:'group1',forum_thread_id:'t1',destination:'platform'}]}});
+assert.equal(result.status,404);assert.equal(result.writes.length,0);
+result=await run('auth-login',{identity:'member',password:'test-only-password'},{tables:{Creator:[{handle:'member',status:'active',user_id:'reader'}],User:[{id:'reader',email:'test@example.invalid'}]},loginResponse:{access_token:'test-only-token'}});
+assert.equal(result.status,200);assert.equal(result.data.access_token,'test-only-token');assert.equal(result.data.email,undefined);assert.equal(result.writes.length,0);
+result=await run('auth-login',{identity:'unknown-member',password:'test-only-password'});
+assert.equal(result.status,401);
+result=await run('comment-report',{id:'c1',reason:'Report to staff'});
+assert.equal(result.status,200);assert.equal(result.writes[0].fields.destination,'platform');assert.equal(result.writes[0].fields.comment_id,'c1');
+result=await run('post-save',ordinaryPost,{agreementReady:true,tables:{CreatorLicenseSignature:[signed]}});
+assert.equal(result.status,200);assert.equal(result.writes[0].entity,'Creator');assert.equal(result.writes.find(w=>w.entity==='Post').fields.user_id,'reader');
+result=await run('comment',{post_id:'p1',body:'A free member comment'},{agreementReady:true,tables:{CreatorLicenseSignature:[signed]}});
+assert.equal(result.status,200);assert.equal(result.writes[0].entity,'Comment');
+const header='Bearer synthetic-test-session';
+const sessionHash=Buffer.from(await webcrypto.subtle.digest('SHA-256',new TextEncoder().encode(header))).toString('hex');
+const verification={user_id:'reader',session_hash:sessionHash,status:'verified',mfa_enrolled:true,expires_at:new Date(Date.now()+60000).toISOString()};
+result=await run('plan-save',{name:'Verified paid offer',price_suffering:20,status:'active'},{agreementReady:true,headers:{authorization:header},tables:{Creator:[{...creatorRow,user_id:'reader'}],CreatorLicenseSignature:[signed],CreatorVerification:[verification]}});
+assert.equal(result.status,200);assert.equal(result.writes[0].entity,'CreatorPlan');
+result=await run('plan-save',{name:'Replay attempt',price_suffering:20,status:'active',mfa_verified:true},{agreementReady:true,headers:{authorization:'Bearer another-test-session'},tables:{Creator:[{...creatorRow,user_id:'reader'}],CreatorLicenseSignature:[signed],CreatorVerification:[verification]}});
+assert.equal(result.status,403);assert.equal(result.writes.length,0);
+console.log(`${scenarioCount} API scenarios and 6 internal-link checks passed; no external services invoked.`);

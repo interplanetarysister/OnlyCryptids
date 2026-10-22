@@ -1,11 +1,11 @@
 {
-  "name": "Comment",
+  "name": "ForumReply",
   "type": "object",
   "properties": {
     "user_id": {
       "type": "string"
     },
-    "post_id": {
+    "thread_id": {
       "type": "string"
     },
     "body": {
@@ -15,15 +15,29 @@
       "type": "string"
     },
     "status": {
-      "type": "string"
+      "type": "string",
+      "enum": [
+        "visible",
+        "hidden",
+        "removed"
+      ]
     },
     "license_signature_id": {
       "type": "string"
     },
     "license_version": {
       "type": "string"
+    },
+    "parent_reply_id": {
+      "type": "string"
     }
   },
+  "required": [
+    "user_id",
+    "thread_id",
+    "body",
+    "status"
+  ],
   "rls": {
     "create": false,
     "read": false,

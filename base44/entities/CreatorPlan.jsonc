@@ -1,0 +1,57 @@
+{
+  "name": "CreatorPlan",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "creator_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "price_suffering": {
+      "type": "integer"
+    },
+    "period_days": {
+      "type": "integer"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "paused"
+      ]
+    },
+    "revision": {
+      "type": "integer"
+    },
+    "beneficiary_type": {
+      "type": "string"
+    },
+    "beneficiary_name": {
+      "type": "string"
+    },
+    "revenue_purpose": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "creator_id",
+    "name",
+    "price_suffering",
+    "period_days",
+    "status"
+  ],
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}

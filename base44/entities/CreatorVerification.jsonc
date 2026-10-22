@@ -1,20 +1,23 @@
 {
-  "name": "PolicyAcceptance",
+  "name": "CreatorVerification",
   "type": "object",
   "properties": {
     "user_id": {
       "type": "string"
     },
-    "version": {
+    "status": {
       "type": "string"
     },
-    "agreements": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "mfa_enrolled": {
+      "type": "boolean"
     },
-    "accepted_at": {
+    "session_hash": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "provider": {
       "type": "string"
     }
   },

@@ -1,23 +1,21 @@
 {
-  "name": "Report",
+  "name": "UserBlock",
   "type": "object",
   "properties": {
     "user_id": {
       "type": "string"
     },
-    "post_id": {
+    "target_user_id": {
       "type": "string"
     },
-    "forum_thread_id": {"type": "string"},
-    "forum_reply_id": {"type": "string"},
-    "content_snapshot": {"type": "string"},
-    "reason": {
-      "type": "string"
-    },
-    "status": {
+    "display_name": {
       "type": "string"
     }
   },
+  "required": [
+    "user_id",
+    "target_user_id"
+  ],
   "rls": {
     "create": false,
     "read": false,

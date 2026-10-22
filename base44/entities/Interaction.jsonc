@@ -10,6 +10,9 @@
     },
     "target_id": {
       "type": "string"
+    },
+    "value": {
+      "type": "integer"
     }
   },
   "rls": {

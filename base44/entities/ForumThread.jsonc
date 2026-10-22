@@ -1,17 +1,11 @@
 {
-  "name": "Post",
+  "name": "ForumThread",
   "type": "object",
   "properties": {
-    "creator_id": {
-      "type": "string"
-    },
     "user_id": {
       "type": "string"
     },
     "title": {
-      "type": "string"
-    },
-    "teaser": {
       "type": "string"
     },
     "body": {
@@ -20,29 +14,19 @@
     "category": {
       "type": "string"
     },
-    "format": {
-      "type": "string"
-    },
     "label": {
       "type": "string"
     },
-    "visibility": {
+    "display_name": {
       "type": "string"
     },
     "status": {
-      "type": "string"
-    },
-    "revision": {
-      "type": "integer"
-    },
-    "rights_confirmed": {
-      "type": "boolean"
-    },
-    "media_ids": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+      "type": "string",
+      "enum": [
+        "published",
+        "hidden",
+        "removed"
+      ]
     },
     "license_signature_id": {
       "type": "string"
@@ -50,13 +34,25 @@
     "license_version": {
       "type": "string"
     },
-    "demo": {
+    "community_id": {
+      "type": "string"
+    },
+    "locked": {
       "type": "boolean"
     },
-    "scene": {
+    "pinned": {
+      "type": "boolean"
+    },
+    "subcategory": {
       "type": "string"
     }
   },
+  "required": [
+    "user_id",
+    "title",
+    "body",
+    "status"
+  ],
   "rls": {
     "create": false,
     "read": false,

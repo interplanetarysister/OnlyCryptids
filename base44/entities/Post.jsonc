@@ -55,6 +55,12 @@
     },
     "scene": {
       "type": "string"
+    },
+    "price_suffering": {
+      "type": "integer"
+    },
+    "subcategory": {
+      "type": "string"
     }
   },
   "rls": {

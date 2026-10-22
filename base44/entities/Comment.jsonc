@@ -22,6 +22,9 @@
     },
     "license_version": {
       "type": "string"
+    },
+    "parent_comment_id": {
+      "type": "string"
     }
   },
   "rls": {

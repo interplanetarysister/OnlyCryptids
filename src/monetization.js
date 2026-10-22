@@ -1,14 +1,16 @@
 // Draft catalog: no live PayPal product/plan IDs and no payment activation.
 // Platform membership does not unlock separately priced creator subscriptions.
+import {creditPolicy,creditPacks} from '../base44/functions/cryptid-api/economy.js';
 export const platformTiers = Object.freeze([
  {id:'explorer',name:'Explorer',monthlyCents:0,description:'Discover free posts, follow creators, and save your favorites.',features:['Free community content','Follow and bookmark','Standard text posting']},
  {id:'field-researcher',name:'Field Researcher',monthlyCents:800,description:'A proposed membership for regular contributors.',features:['Explorer features','Premium posting capabilities','Expanded creator tools']},
  {id:'cryptid-creator',name:'Cryptid Creator',monthlyCents:1500,description:'A proposed membership for active cryptid storytellers.',features:['Field Researcher features','Advanced publishing capabilities','Expanded content organization']}
 ]);
 export const coinCatalog = Object.freeze({
- name:'Cryptid Credits',
+ name:creditPolicy.name,
+ unitCents:creditPolicy.unitCents,
  draft:true,
- packs:[{id:'credits-500',credits:500,priceCents:500},{id:'credits-1200',credits:1200,priceCents:1200}],
+ packs:creditPacks.map(p=>({...p,credits:p.units})),
  purchasedCreditsGrantEntries:false,
  purchasedCreditsImproveOdds:false,
  memberCashRedemption:false,

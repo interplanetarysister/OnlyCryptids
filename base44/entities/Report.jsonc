@@ -13,6 +13,24 @@
     },
     "status": {
       "type": "string"
+    },
+    "forum_thread_id": {
+      "type": "string"
+    },
+    "forum_reply_id": {
+      "type": "string"
+    },
+    "content_snapshot": {
+      "type": "string"
+    },
+    "community_id": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "comment_id": {
+      "type": "string"
     }
   },
   "rls": {

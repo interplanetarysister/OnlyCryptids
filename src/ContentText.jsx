@@ -1,0 +1,4 @@
+import React from 'react';
+import {internalContentLink,contentHash} from './content-links';
+export function ContentText({text=''}){const parts=String(text).split(/(https?:\/\/[^\s<>]+|#(?:post|thread|community)=[A-Za-z0-9_.%-]+)/g);return <>{parts.map((part,i)=>{const trimmed=part.replace(/[.,;!?)]*$/,'');const href=internalContentLink(trimmed,location.origin);return href?<React.Fragment key={i}><a className="content-link" href={href}>{trimmed}</a>{part.slice(trimmed.length)}</React.Fragment>:<React.Fragment key={i}>{part}</React.Fragment>})}</>}
+export function ShareContent({kind,id}){return <button className="text-button" onClick={()=>{location.hash=contentHash(kind,id)}}>Open shareable link ↗</button>}
