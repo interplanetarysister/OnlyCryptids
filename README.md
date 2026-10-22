@@ -6,6 +6,14 @@ Base44 app: https://only-cryptids-69c8c9fb.base44.app
 
 App ID: `6ad9e37246a8642469c8c9fb` — Unrewound's Workspace. The deployed app has workspace visibility and uses Base44 authentication. Source is synchronized through GitHub and the connected Base44 editor.
 
+Next sprint: [docs/next-build-sprint.md](docs/next-build-sprint.md). Current visitor address: https://onlycryptids.base44.app/login (sign-in wall observed; signed-in runtime is unverified).
+
+## Encounter map
+
+The Encounter map navigation page uses Leaflet and OpenStreetMap standard tiles (no Google API key, billing account or paid geocoding). Members select one of their published Claimed Encounter stories, choose a point or enter coordinates, add a date/place and explicitly confirm firsthand/public sharing. Approximate mode rounds to 0.1° before storage; exact mode is optional. Pins show only public teasers and story links, with paid story access still enforced. Fiction/AI labels, hidden/deleted/draft stories and suspended authors are excluded. Relabeling/unpublishing removes the pin. Members can remove their pins; administrators can hide the source story through existing reporting. No fake encounter pins are seeded.
+
+OSM tiles require attribution, normal browser referrer/caching and no bulk prefetch/offline downloads. Tile availability is best-effort; the story list and coordinate form remain usable on tile failure. Tiles are requested only while the map page is open; there is no automatic geolocation or address search. Review provider capacity before large-scale launch. https://operations.osmfoundation.org/policies/tiles/
+
 ## Current implementation
 
 - Original creator/member feed, cryptid categories and subcategories, public teasers, protected subscriber/premium bodies, profiles, bookmarks, follows and moderation.
