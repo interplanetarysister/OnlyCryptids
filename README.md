@@ -1,5 +1,7 @@
 # Only Cryptids
 
+> **Hosting migration status (2026-10-23): source present, independent-host migration not yet ready.** The frontend, Base44 backend source, schemas and tests are versioned here, but authentication, live entity records, backend runtime, provider connections and payout verification remain Base44-/provider-specific. See [the verified host-migration audit](docs/HOST_MIGRATION_READINESS.md) before cloning to a new provider. Do not commit private user exports or API keys.
+
 A cryptid creator community operated by **Interplanetary Association**. This is a work in progress, not a launch-ready marketplace.
 
 Base44 app: https://only-cryptids-69c8c9fb.base44.app
