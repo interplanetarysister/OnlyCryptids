@@ -1,4 +1,9 @@
 import React from 'react';
 import {internalContentLink,contentHash} from './content-links';
 export function ContentText({text=''}){const parts=String(text).split(/(https?:\/\/[^\s<>]+|#(?:post|thread|community)=[A-Za-z0-9_.%-]+|#[A-Za-z][A-Za-z0-9_]{0,39})/g);return <>{parts.map((part,i)=>{const trimmed=part.replace(/[.,;!?)]*$/,'');const href=internalContentLink(trimmed,location.origin);return /^#[A-Za-z][A-Za-z0-9_]{0,39}$/.test(trimmed)?<a key={i} className="content-link" href={'#tag='+encodeURIComponent(trimmed.slice(1).toLowerCase())} title={'Browse related dark web posts tagged '+trimmed}>{trimmed}</a>:href?<React.Fragment key={i}><a className="content-link" href={href}>{trimmed}</a>{part.slice(trimmed.length)}</React.Fragment>:<React.Fragment key={i}>{part}</React.Fragment>})}</>}
-export function ShareContent({kind,id}){return <button className="text-button" onClick={()=>{location.hash=contentHash(kind,id)}}>Open shareable link ↗</button>}
+export function ShareContent({kind,id}){
+ const link=()=>new URL(contentHash(kind,id),window.location.href).href;
+ const nativeShare=async()=>{const url=link();if(typeof navigator.share==='function'){try{await navigator.share({title:'Only Cryptids',url});return}catch(error){if(error?.name==='AbortError')return}}try{await navigator.clipboard.writeText(url);window.alert('Link copied. Paste it into Facebook or Instagram to share.')}catch{window.prompt('Copy this link to share:',url)}};
+ const facebook=()=>{const url='https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(link());const popup=window.open(url,'_blank','noopener,noreferrer');if(!popup)window.location.assign(url)};
+ return <div className="form-row" aria-label="Share this content"><button type="button" className="text-button" onClick={()=>{location.hash=contentHash(kind,id)}}>Open shareable link ↗</button><button type="button" className="secondary" onClick={facebook}>Post to Facebook</button><button type="button" className="secondary" onClick={nativeShare}>Share to Instagram or another app</button></div>
+}
