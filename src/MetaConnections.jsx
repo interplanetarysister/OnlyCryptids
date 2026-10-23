@@ -64,6 +64,99 @@ export default function MetaConnections() {
   </section>;
 }
 
+
+/** An explicit owner-only batch. Each item passes the same server-side account
+ * and post-ownership checks as the single-post publish path. */
+export function BulkMetaPublisher({ posts = [] }) {
+  const { accounts, busy: checking, error: connectionError, refresh } = useMetaAccounts();
+  const [selection, setSelection] = useState([]);
+  const [platform, setPlatform] = useState('facebook');
+  const [pageId, setPageId] = useState('');
+  const [approved, setApproved] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [results, setResults] = useState([]);
+  const eligible = posts.filter(p => p?.id && p.status === 'published');
+  const selectedPosts = eligible.filter(p => selection.includes(p.id));
+  const ready = Boolean(accounts?.[platform]?.publish_ready);
+  const pageOptions = accounts?.facebook?.pages || [];
+  const toggle = (id) => {
+    setResults([]);
+    setApproved(false);
+    setSelection(previous => previous.includes(id) ? previous.filter(value => value !== id)
+      : previous.length < 10 ? [...previous, id] : previous);
+  };
+  const publishSelected = async () => {
+    if (running || checking || !ready || !approved || !selectedPosts.length) return;
+    if (selectedPosts.length > 10) return;
+    if (platform === 'facebook' && !pageOptions.some(p => p.id === pageId)) return;
+    if (!window.confirm('Publish ' + selectedPosts.length + ' selected post(s) to this ' +
+      (platform === 'facebook' ? 'Facebook Page' : 'Instagram professional account') +
+      '? Only provider-confirmed items will count as published.')) return;
+    setRunning(true);
+    setResults([]);
+    const report = [];
+    for (const post of selectedPosts) {
+      try {
+        const response = await api('meta-publish', {
+          platform, post_id: post.id, page_id: pageId, rights_confirmed: true,
+        });
+        const outcome = response?.success === true && response?.status === 'published'
+          ? 'Published' : response?.status === 'processing' ? 'Still processing'
+          : response?.status === 'uncertain' ? 'Uncertain; check provider'
+          : 'Not published';
+        report.push({ id: post.id, title: post.title, outcome, message: response?.message || '' });
+      } catch (error) {
+        report.push({ id: post.id, title: post.title, outcome: 'Not confirmed', message: error?.message || 'Check the provider.' });
+      }
+      setResults([...report]);
+    }
+    setRunning(false);
+    setApproved(false);
+  };
+  return <section className="panel" aria-label="Bulk social publishing">
+    <h3>Bulk actions: publish your posts</h3>
+    <p>Select up to 10 of your published posts and one connected destination. Nothing is sent until you confirm. Each item is checked separately, and failed posts are not marked successful.</p>
+    {connectionError && <p role="alert" className="error">{connectionError}</p>}
+    {eligible.length === 0 && <p className="muted">Publish your first post to use bulk actions.</p>}
+    {eligible.length > 0 && <>
+      <div className="form-row">
+        <button type="button" className="secondary" disabled={running} onClick={() => {setSelection(eligible.slice(0,10).map(p => p.id));setApproved(false);setResults([]);}}>Select first 10</button>
+        <button type="button" className="secondary" disabled={running} onClick={() => {setSelection([]);setApproved(false);setResults([]);}}>Clear selection</button>
+      </div>
+      <div className="bulk-post-list" style={{maxHeight:240,overflowY:'auto'}}>
+        {eligible.map(post => <label key={post.id} className="check">
+          <input type="checkbox" checked={selection.includes(post.id)} disabled={running || (!selection.includes(post.id) && selection.length >= 10)}
+            onChange={() => toggle(post.id)}/><span>{post.title || 'Untitled post'}</span>
+        </label>)}
+      </div>
+      <p className="muted">{selection.length} of 10 posts selected</p>
+      <label>Destination
+        <select value={platform} disabled={running} onChange={e => {setPlatform(e.target.value);setPageId('');setApproved(false);setResults([]);}}>
+          <option value="facebook">Facebook Page</option><option value="instagram">Instagram professional account</option>
+        </select>
+      </label>
+      {platform === 'facebook' && ready && <label>Page
+        <select value={pageId} disabled={running} onChange={e => {setPageId(e.target.value);setApproved(false);}}>
+          <option value="">Select one of your authorized Pages</option>
+          {pageOptions.map(page => <option key={page.id} value={page.id}>{page.name}</option>)}
+        </select>
+      </label>}
+      {!ready && <p className="muted">This destination is not ready for direct publishing. Connect and verify it in Settings. Bulk publishing remains disabled until then.</p>}
+      {platform === 'instagram' && <p className="muted">Each selected post must have a public image attached. Text-only posts will be reported as not published.</p>}
+      <label className="check"><input type="checkbox" disabled={running} checked={approved} onChange={e => setApproved(e.target.checked)}/>
+        I have permission to share every selected post and its attached media, and authorize this batch.
+      </label>
+      <button type="button" className="primary" disabled={running || checking || !ready || !approved || !selection.length || (platform === 'facebook' && !pageId)}
+        onClick={publishSelected}>{running ? 'Publishing selected posts…' : 'Publish '+selection.length+' selected post(s)'}</button>
+      <button type="button" className="text-button" disabled={running || checking} onClick={refresh}>Check connection</button>
+    </>}
+    {results.length > 0 && <div role="status" aria-live="polite">
+      <strong>Batch results: {results.filter(r => r.outcome === 'Published').length} confirmed, {results.length - results.filter(r => r.outcome === 'Published').length} not confirmed or pending</strong>
+      <ul>{results.map(r => <li key={r.id}>{r.title}: {r.outcome}{r.message ? ' — '+r.message : ''}</li>)}</ul>
+    </div>}
+  </section>;
+}
+
 export function MetaPublisher({ postId }) {
   const { accounts, busy, error, setError, refresh, setBusy } = useMetaAccounts();
   const [facebookPage, setFacebookPage] = useState('');
