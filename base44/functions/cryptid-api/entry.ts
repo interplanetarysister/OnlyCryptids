@@ -3,6 +3,7 @@ import {createClientFromRequest} from 'npm:@base44/sdk';
 import {licenseVersion,renderCreatorLicense,licenseReady} from './license.js';
 import {creditPolicy,creditPacks,creditCost} from './economy.js';
 import {cryptidTaxonomy,validSubcategory} from './taxonomy.js';
+import {handleAIAction} from './ai-actions.js';
 
 class RequestError extends Error {status:number;constructor(message:string,status=400){super(message);this.status=status}}
 function text(v:unknown,max:number,required=false){if(typeof v!=='string'||v.length>max||(required&&!v.trim()))throw new RequestError('Please check the required fields and their length.');return v.trim()}
@@ -202,6 +203,7 @@ Deno.serve(async req=>{
    const round=(n:number)=>precision==='approximate'?Math.round(n*10)/10:Math.round(n*100000)/100000;
    await db.Post.update(p.id,{sighting_enabled:true,sighting_latitude:round(data.latitude),sighting_longitude:round(data.longitude),sighting_precision:precision,encounter_date:day,sighting_place:text(data.place,120,true),sighting_firsthand:true});await audit('sighting-save',p.id,precision);return ok({success:true});
   }
+  if(action.startsWith('ai-'))return handleAIAction({action,data,user,db,headers,audit,RequestError});
   if(action==='credit-catalog')return ok({policy:creditPolicy,packs:creditPacks,purchases_enabled:false,spending_enabled:false,disabled_reason:'PayPal connection, verified funding and atomic credit accounting are not active.'});
   if(action==='creator-plans'){
    const c=await db.Creator.get(text(data.creator_id,100,true));if(!c||c.status!=='active'||await isBlocked(c.user_id))throw new RequestError('Creator unavailable.',404);const rows=await db.CreatorPlan.filter({creator_id:c.id},'created_date',100);return ok({plans:rows.filter(p=>p.status==='active'||c.user_id===user?.id||(c.platform_owned&&isElevated)).map(publicPlan),checkout_enabled:false});
