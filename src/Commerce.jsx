@@ -34,7 +34,7 @@ export function CreatorEarnings({user,signIn}){
  return <section className="panel"><span className="eyebrow">CREATOR EARNINGS / PAYPAL</span><h2>Subscription earnings & withdrawals</h2>
   <p>Only confirmed creator subscription payments may become cash earnings. Suffering credits, tips, AI memberships and unverified purchases are excluded.</p>
   {!user?<button className="primary" onClick={signIn}>Sign in to see your earnings</button>:busy?<p>Checking your account’s verified records…</p>:summary?<>
-    <div className="stats"><div><small>Available to withdraw</small><strong>{usd(summary.available_cents)}</strong></div><div><small>Pending / held</small><strong>{usd(summary.pending_cents+summary.committed_cents)}</strong></div><div><small>Previously paid</small><strong>{usd(summary.paid_cents)}</strong></div></div>
+    <div className="stats"><div><small>{summary.withdrawals_enabled?'Available to withdraw':'Reconciled earnings (locked)'}</small><strong>{usd(summary.available_cents)}</strong></div><div><small>Pending / held</small><strong>{usd(summary.pending_cents+summary.committed_cents)}</strong></div><div><small>Previously paid</small><strong>{usd(summary.paid_cents)}</strong></div></div>
     <p className="muted">PayPal integration: {summary.provider_connected?'Merchant identifier configured':'Not connected'} · Creator receiving account: {summary.recipient_connected?'Verified record exists':'Not linked'}</p>
     <p className="setup-message">{summary.reason}</p>
     {summary.untrusted_records>0&&<p className="error">Some records could not be verified and were excluded. Contact support for a reconciliation review.</p>}
