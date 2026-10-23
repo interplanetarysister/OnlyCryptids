@@ -1,0 +1,66 @@
+{
+  "name": "CreatorEarning",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "creator_id": {
+      "type": "string"
+    },
+    "source_type": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "provider_merchant_id": {
+      "type": "string"
+    },
+    "provider_capture_id": {
+      "type": "string"
+    },
+    "provider_event_id": {
+      "type": "string"
+    },
+    "provider_status": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "verified_payment": {
+      "type": "boolean"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "gross_cents": {
+      "type": "integer"
+    },
+    "creator_amount_cents": {
+      "type": "integer"
+    },
+    "processor_fee_cents": {
+      "type": "integer"
+    },
+    "platform_fee_cents": {
+      "type": "integer"
+    },
+    "refunded_cents": {
+      "type": "integer"
+    },
+    "reversed_cents": {
+      "type": "integer"
+    },
+    "available_at": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}
