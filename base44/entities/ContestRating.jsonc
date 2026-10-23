@@ -1,0 +1,36 @@
+{
+  "name": "ContestRating",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "post_id": {
+      "type": "string"
+    },
+    "engagement": {
+      "type": "integer"
+    },
+    "community_support": {
+      "type": "integer"
+    },
+    "creativity": {
+      "type": "integer"
+    },
+    "fear": {
+      "type": "integer"
+    },
+    "cryptid": {
+      "type": "integer"
+    },
+    "rated_at": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}
