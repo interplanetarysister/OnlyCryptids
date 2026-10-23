@@ -97,8 +97,8 @@ export function MetaPublisher({ postId }) {
         <button type="button" className="secondary" disabled={busy || !facebookPage || !rightsConfirmed} onClick={() => post('facebook')}>Publish this post to Facebook Page</button></>
       : <p className="muted">Facebook Page publishing needs a verified member connection with posting permission.</p>}
     {accounts?.instagram?.publish_ready
-      ? <><label>Public image URL for Instagram<input type="url" required placeholder="https://example.com/image.jpg" value={imageUrl} onChange={e => setImageUrl(e.target.value)} maxLength={1500}/></label>
-        <small>Instagram publishing requires an image accessible over HTTPS. Only provide media you have rights to share.</small>
+      ? <><label>Instagram image URL (optional if your post has a public picture)<input type="url" placeholder="https://example.com/image.jpg" value={imageUrl} onChange={e => setImageUrl(e.target.value)} maxLength={1500}/></label>
+        <small>Uses a public image already attached to your post when available; otherwise paste its public HTTPS image URL. Only share media you own or have permission to use.</small>
         <button type="button" className="secondary" disabled={busy || !rightsConfirmed} onClick={() => post('instagram')}>Publish image to Instagram</button></>
       : <p className="muted">Instagram API publishing needs a verified Business or Creator account. You can still use the device's Share image option.</p>}
     <button type="button" className="text-button" disabled={busy} onClick={refresh}>Check connections again</button>
