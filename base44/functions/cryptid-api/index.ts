@@ -1,7 +1,9 @@
 // Only Cryptids: authoritative access, community and Suffering offer API.
 import {createClientFromRequest} from 'npm:@base44/sdk';
 import {licenseVersion,renderCreatorLicense,licenseReady} from './license.js';
-import {creditPolicy,creditPacks,creditCost} from './economy.js';
+import {creditPolicy,creditPacks,creditCost,generationQuote,tipQuote} from './economy.js';
+import {reconcileEarnings} from './creator-finance.js';
+import {buildMonthlyBoards,scoreCategories,starRange} from './leaderboard.js';
 import {cryptidTaxonomy,validSubcategory} from './taxonomy.js';
 import {normalizeSocialProfiles,recognizedNetworks,extractHashtags} from './social-links.js';
 import {handleSocialAction} from './social-actions.js';
@@ -198,7 +200,64 @@ Deno.serve(async req=>{
    await db.Post.update(p.id,{sighting_enabled:true,sighting_latitude:round(data.latitude),sighting_longitude:round(data.longitude),sighting_precision:precision,encounter_date:day,sighting_place:text(data.place,120,true),sighting_firsthand:true});await audit('sighting-save',p.id,precision);return ok({success:true});
   }
   if(action==='mention-resolve'||action==='tag-feed')return await handleSocialAction({action,data,db,headers,RequestError,isBlocked,teaser,publicCreator});
-  if(action==='credit-catalog')return ok({policy:creditPolicy,packs:creditPacks,purchases_enabled:false,spending_enabled:false,disabled_reason:'PayPal connection, verified funding and atomic credit accounting are not active.'});
+  if(action==='earnings-summary'){
+   auth();const profiles=await db.Creator.filter({user_id:user.id});const owner=profiles.find((c:any)=>c.status==='active'&&c.platform_owned!==true);
+   const unconfigured={earned_cents:0,pending_cents:0,available_cents:0,committed_cents:0,paid_cents:0,refunded_cents:0,untrusted_records:0,payouts_enabled:false};
+   const merchantId=String(Deno.env.get('ONLYCRYPTIDS_PAYPAL_MERCHANT_ID')||'').trim();
+   if(!owner||!merchantId)return ok({...unconfigured,creator_id:owner?.id||null,currency:'USD',provider:'paypal',provider_connected:false,recipient_connected:false,withdrawals_enabled:false,
+     reason:owner?'PayPal marketplace and verified revenue reconciliation are not configured.':'Create an active creator profile to prepare for payouts.',history:[]});
+   const [e,p,receiver]=await Promise.all([
+     db.CreatorEarning.filter({user_id:user.id,creator_id:owner.id},'-created_date',1001),
+     db.CreatorPayout.filter({user_id:user.id,creator_id:owner.id},'-created_date',1001),
+     db.CreatorPayoutProfile.filter({user_id:user.id,creator_id:owner.id},'-created_date',5)]);
+   if(e.length>1000||p.length>1000)return ok({...unconfigured,creator_id:owner.id,currency:'USD',provider:'paypal',provider_connected:false,recipient_connected:false,withdrawals_enabled:false,
+     reason:'The payout history is too large to safely reconcile in this view. A paginated ledger review is required.',history:[]});
+   const totals=reconcileEarnings({earnings:e,payouts:p,merchantId});
+   const linked=receiver.some((r:any)=>r.provider==='paypal'&&r.status==='active'&&r.verified===true&&String(r.provider_account_id||'').length>=6);
+   return ok({...totals,creator_id:owner.id,currency:'USD',provider:'paypal',provider_connected:true,recipient_connected:linked,withdrawals_enabled:false,
+      reason:'Live payouts remain disabled until seller onboarding, verified subscription webhooks, an atomic ledger, and PayPal Payouts approval are complete.',
+      history:p.slice(0,15).map((r:any)=>({status:r.status,amount_cents:r.amount_cents,requested_at:r.requested_at,completed_at:r.completed_at}))});
+  }
+  if(action==='payout-request'){auth();throw new RequestError('Withdrawal is not active. No money has been reserved or transferred. Complete PayPal marketplace approval and verified earnings reconciliation first.',503)}
+  if(action==='generation-quote'){
+   const mode=choose(data.mode,['story','photo-story','refine','art'],'story');
+   return ok({...generationQuote(mode),spending_enabled:false,welcome_suffering:creditPolicy.welcomeUnits,message:'1 Suffering per successful generation is planned. No credit can be spent until the atomic wallet and AI provider are enabled.'});
+  }
+  if(action==='tip-quote'){
+   auth();const kind=choose(data.target_kind,['post','creator'],'post');const amount=tipQuote(data.units);
+   let c:any=null;
+   if(kind==='post'){const p=await db.Post.get(text(data.target_id,100,true));if(!p||p.status!=='published'||await isBlocked(p.user_id))throw new RequestError('Post unavailable.',404);c=await db.Creator.get(p.creator_id)}
+   else {c=await db.Creator.get(text(data.target_id,100,true))}
+   if(!c||c.status!=='active'||c.user_id===user.id||await isBlocked(c.user_id))throw new RequestError('Tipping this account is unavailable.',403);
+   return ok({...amount,target_kind:kind,target_id:data.target_id,recipient:c.display_name,tip_enabled:false,withdrawable:false,
+      message:'Suffering tips are a proposed community feature. No credit is sent, debited or converted to cash.'});
+  }
+  if(action==='tip-send'){auth();throw new RequestError('Suffering tips are not active. No credit was debited or sent.',503)}
+  if(action==='leaderboard-month'){
+   const month=text(data.month||new Date().toISOString().slice(0,7),7,true);
+   if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new RequestError('Invalid leaderboard month.');
+   const [ps,cs,rs,ls,comments]=await Promise.all([
+    db.Post.filter({status:'published'},'-created_date',301),
+    db.Creator.filter({status:'active'},'-created_date',300),
+    db.ContestRating.list('-created_date',1001),
+    db.Interaction.filter({kind:'like'},'-created_date',1001),
+    db.Comment.filter({status:'visible'},'-created_date',1001)]);
+   const boards=buildMonthlyBoards({posts:ps,creators:cs,ratings:rs,interactions:ls,comments,month});
+   return ok({...boards,data_limited:ps.length>300||rs.length>1000||ls.length>1000||comments.length>1000,
+      tips_enabled:false,eligibility:'No paid Suffering contributes to the prize decision. A final winner has not been selected.'});
+  }
+  if(action==='leaderboard-rate'){
+   auth();const p=await db.Post.get(text(data.post_id,100,true));
+   if(!p||p.status!=='published'||p.visibility!=='free'||p.demo===true||await isBlocked(p.user_id))throw new RequestError('This post cannot be rated.',403);
+   if(p.user_id===user.id)throw new RequestError('You cannot judge your own work.',403);
+   const fields:any={user_id:user.id,post_id:p.id,rated_at:new Date().toISOString()};
+   for(const field of scoreCategories){if(!starRange(data[field]))throw new RequestError('Rate every category from 1 to 5.');fields[field]=data[field]}
+   const existing=await db.ContestRating.filter({user_id:user.id,post_id:p.id});
+   const rec=existing.length?await db.ContestRating.update(existing[0].id,fields):await db.ContestRating.create(fields);
+   await audit('leaderboard-rate',p.id,'five-category-rating');
+   return ok({rated:true,id:rec.id});
+  }
+  if(action==='credit-catalog')return ok({policy:creditPolicy,packs:creditPacks,purchases_enabled:false,spending_enabled:false,welcome_suffering:creditPolicy.welcomeUnits,ai_generation_cost:creditPolicy.aiGenerationUnits,tips_enabled:false,disabled_reason:'PayPal connection, verified funding and atomic credit accounting are not active.'});
   if(action==='creator-plans'){
    const c=await db.Creator.get(text(data.creator_id,100,true));if(!c||c.status!=='active'||await isBlocked(c.user_id))throw new RequestError('Creator unavailable.',404);const rows=await db.CreatorPlan.filter({creator_id:c.id},'created_date',100);return ok({plans:rows.filter(p=>p.status==='active'||c.user_id===user?.id||(c.platform_owned&&isElevated)).map(publicPlan),checkout_enabled:false});
   }
