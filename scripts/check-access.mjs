@@ -7,6 +7,9 @@ import {transformWithOxc} from 'vite';
 import {creditPolicy,creditPacks,creditCost} from '../base44/functions/cryptid-api/economy.js';
 import {parseContentHash,internalContentLink} from '../src/content-links.js';
 import {cryptidTaxonomy,validSubcategory} from '../base44/functions/cryptid-api/taxonomy.js';
+import {normalizeSocialProfiles,recognizedNetworks,extractHashtags} from '../base44/functions/cryptid-api/social-links.js';
+import {handleSocialAction} from '../base44/functions/cryptid-api/social-actions.js';
+import {handleAIAction} from '../base44/functions/cryptid-api/ai-actions.js';
 
 let source=await readFile(new URL('../base44/functions/cryptid-api/index.ts',import.meta.url),'utf8');
 source=source.replace(/^import .*;\n/gm,'');
@@ -27,7 +30,8 @@ async function run(action,payload={},options={}){
   create:async(fields)=>{writes.push({entity,fields});return {...fields,id:'new'}},
   delete:async(id)=>{writes.push({entity,id,deleted:true})},
  })});
- const sandbox={Deno:{serve:fn=>{handler=fn}},Response,TextEncoder,crypto:webcrypto,console,
+ const sandbox={Deno:{serve:fn=>{handler=fn},env:{get:()=>''}},Response,TextEncoder,crypto:webcrypto,console,
+  normalizeSocialProfiles,recognizedNetworks,extractHashtags,handleSocialAction,handleAIAction,
   createClientFromRequest:()=>({auth:{me:async()=>user,loginViaEmailPassword:async()=>{if(options.loginResponse)return options.loginResponse;throw new Error('Invalid credentials')}},asServiceRole:{entities:db}}),
   renderCreatorLicense:()=>'',licenseReady:()=>options.agreementReady===true,licenseVersion:'test',creditPolicy,creditPacks,creditCost,cryptidTaxonomy,validSubcategory};
  vm.runInNewContext(compiled.code,sandbox);
