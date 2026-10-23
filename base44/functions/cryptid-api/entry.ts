@@ -55,6 +55,100 @@ Deno.serve(async req=>{
   function publicCommunity(c:any){return {id:c.id,name:c.name,slug:c.slug,description:c.description,rules:c.rules}}
   function offset(v:unknown){const n=Number(v??0);if(!Number.isInteger(n)||n<0||n>10000)throw new RequestError('Invalid page.');return n}
   const ok=(value:any)=>Response.json(value,{headers});
+
+  // Only app-user grants may authorize member publishing; shared app tokens cannot.
+  const metaEnv={facebook:'CRYPTIDS_FACEBOOK_PAGES_APP_USER_CONNECTOR_ID',instagram:'CRYPTIDS_INSTAGRAM_APP_USER_CONNECTOR_ID'};
+  const metaId=(v:unknown)=>{const s=String(v||'').trim();if(!/^[0-9]{5,30}$/.test(s))throw new RequestError('Invalid provider account.');return s};
+  async function metaRequest(host:string,path:string,token:string,form?:URLSearchParams){
+    const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),12000);
+    try{
+      const r=await fetch(host+path,{method:form?'POST':'GET',redirect:'error',signal:ctrl.signal,
+        headers:{Authorization:'Bearer '+token,Accept:'application/json',...(form?{'Content-Type':'application/x-www-form-urlencoded'}:{})},...(form?{body:form}:{})});
+      const json=await r.json().catch(()=>null);
+      if(!r.ok||!json||json.error)throw new RequestError('The provider did not authorize that action. Check your connection and permissions.',502);
+      return json;
+    }catch(e){if(e instanceof RequestError)throw e;throw new RequestError('The social platform could not confirm the request. Check before retrying.',502)}
+    finally{clearTimeout(timer)}
+  }
+  async function metaSession(platform:'facebook'|'instagram'){
+    const connector_id=Deno.env.get(metaEnv[platform])||'';
+    if(!connector_id)return {configured:false,connected:false,publish_ready:false,reason:'Member account linking is not configured.'};
+    let conn:any;try{conn=await client.asServiceRole.connectors.getCurrentAppUserConnection(connector_id)}catch{}
+    if(!conn?.accessToken)return {configured:true,connected:false,publish_ready:false,connector_id,reason:'Connect your account to Cryptids first.'};
+    const token=String(conn.accessToken);
+    try{
+      if(platform==='facebook'){
+        const permissions=await metaRequest('https://graph.facebook.com','/v26.0/me/permissions',token);
+        const grants=new Set((Array.isArray(permissions.data)?permissions.data:[]).filter((v:any)=>v.status==='granted').map((v:any)=>String(v.permission||'')));
+        const p=await metaRequest('https://graph.facebook.com','/v26.0/me/accounts?fields=id,name,tasks,access_token&limit=100',token);
+        const pages=(Array.isArray(p.data)?p.data:[]).filter((v:any)=>/^[0-9]{5,30}$/.test(String(v.id||''))&&!!v.access_token&&Array.isArray(v.tasks)&&v.tasks.some((t:string)=>['CREATE_CONTENT','MANAGE'].includes(t)));
+        const ready=grants.has('pages_manage_posts')&&grants.has('pages_show_list')&&pages.length>0;
+        return {configured:true,connected:true,publish_ready:ready,connector_id,pages:pages.map((v:any)=>({id:String(v.id),name:String(v.name||'Facebook Page').slice(0,100)})),_pages:pages,reason:ready?'':'Page publishing permission or Page selection is missing.'};
+      }
+      const p=await metaRequest('https://graph.instagram.com','/v26.0/me?fields=id,username,account_type',token);
+      const type=String(p.account_type||'').toUpperCase();
+      const ready=['BUSINESS','MEDIA_CREATOR','CREATOR'].includes(type);
+      return {configured:true,connected:!!p.id,publish_ready:ready,connector_id,id:metaId(p.id),username:String(p.username||'').slice(0,100),account_type:type,_token:token,reason:ready?'':'An Instagram Business or Creator account is needed for API publishing.'};
+    }catch{return {configured:true,connected:false,publish_ready:false,connector_id,reason:'The provider account could not be verified. Reconnect it.'}}
+  }
+  if(action==='meta-status'){
+    auth();const [facebook,instagram]=await Promise.all([metaSession('facebook'),metaSession('instagram')]);
+    function safe(v:any){const {configured,connected,publish_ready,connector_id,pages,id,username,account_type,reason}=v;return {configured,connected,publish_ready,connector_id,pages,id,username,account_type,reason}}
+    return ok({facebook:safe(facebook),instagram:safe(instagram)});
+  }
+  if(action==='meta-publish'){
+    auth();
+    const platform=choose(data.platform,['facebook','instagram'],'facebook') as 'facebook'|'instagram';
+    const p=await db.Post.get(text(data.post_id,100,true));
+    if(!p||p.user_id!==user.id||p.status!=='published')throw new RequestError('Choose one of your own published posts.',403);
+    if(data.rights_confirmed!==true)throw new RequestError('Confirm that you have the right to share this post and its image.');
+    const session:any=await metaSession(platform);
+    if(!session.publish_ready)throw new RequestError(session.reason||'Connect the provider and grant posting permission.',409);
+    const destination=platform==='facebook'?metaId(data.page_id):metaId(session.id);
+    const page=platform==='facebook'?session._pages.find((v:any)=>String(v.id)===destination):null;
+    if(platform==='facebook'&&!page)throw new RequestError('Select a Page you have permission to publish to.',403);
+    let image_url='';
+    if(platform==='instagram'){
+      image_url=text(data.image_url,1500,true);
+      try{
+        const u=new URL(image_url),h=u.hostname.toLowerCase();
+        if(u.protocol!=='https:'||u.username||u.password||u.port||!h.includes('.')||h==='localhost'||h.endsWith('.local')||h.endsWith('.internal')||/^[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+$/.test(h))throw new Error();
+      }catch{throw new RequestError('Instagram publishing needs a public HTTPS image URL.')}
+    }
+    const prior=(await db.SocialPublication.filter({user_id:user.id,post_id:p.id,platform,destination_id:destination}))[0];
+    if(prior&&!(platform==='instagram'&&prior.status==='processing'&&prior.container_id)){
+      return ok({status:prior.status,success:prior.status==='published',external_post_id:prior.status==='published'?prior.external_post_id:undefined,message:prior.status==='published'?'This post has already been published to this account.':'Previous submission may have reached the provider. Check there before retrying.'});
+    }
+    const url='https://onlycryptids.base44.app/#post='+encodeURIComponent(p.id);
+    const caption=[String(p.title||''),String(p.teaser||''),url].filter(Boolean).join(String.fromCharCode(10,10)).slice(0,2100);
+    const log=prior||await db.SocialPublication.create({user_id:user.id,post_id:p.id,platform,destination_id:destination,status:'pending',container_id:'',external_post_id:'',created_at:new Date().toISOString(),completed_at:''});
+    try{
+      let external='';
+      if(platform==='facebook'){
+        const result=await metaRequest('https://graph.facebook.com','/v26.0/'+destination+'/feed',String(page.access_token),new URLSearchParams({message:caption}));
+        external=String(result.id||'');
+      }else{
+        let containerId=String(log.container_id||'');
+        if(!containerId){
+          const created=await metaRequest('https://graph.instagram.com','/v26.0/'+destination+'/media',session._token,new URLSearchParams({image_url,caption}));
+          containerId=metaId(created.id);
+          await db.SocialPublication.update(log.id,{status:'processing',container_id:containerId});
+        }
+        const result=await metaRequest('https://graph.instagram.com','/v26.0/'+containerId+'?fields=status_code',session._token);
+        if(result.status_code!=='FINISHED')return ok({success:false,status:'processing',message:'Instagram is preparing your image. Return and press Publish again to finish this same upload.'});
+        const published=await metaRequest('https://graph.instagram.com','/v26.0/'+destination+'/media_publish',session._token,new URLSearchParams({creation_id:containerId}));
+        external=String(published.id||'');
+      }
+      if(!/^[0-9]{5,30}(_[0-9]{5,30})?$/.test(external))throw new RequestError('Provider did not confirm a new post ID.',502);
+      await db.SocialPublication.update(log.id,{status:'published',external_post_id:external,completed_at:new Date().toISOString()});
+      await audit('meta-publish',p.id,platform);
+      return ok({success:true,status:'published',external_post_id:external});
+    }catch(error){
+      // Do not repeat an ambiguous provider request automatically.
+      await db.SocialPublication.update(log.id,{status:'uncertain'}).catch(()=>{});
+      throw error;
+    }
+  }
   if(action==='auth-login'){
    const identity=text(data.identity,254,true).toLowerCase();if(typeof data.password!=='string'||data.password.length<1||data.password.length>1024)throw new RequestError('Invalid username or password.',401);let email=identity;
    if(!identity.includes('@')){const keyed=await db.Creator.filter({handle_key:identity});const profile=keyed[0]||(await db.Creator.filter({handle:identity}))[0];if(!profile||profile.status!=='active')throw new RequestError('Invalid username or password.',401);const account=await db.User.get(profile.user_id);if(!account||account.disabled||!account.email)throw new RequestError('Invalid username or password.',401);email=account.email}

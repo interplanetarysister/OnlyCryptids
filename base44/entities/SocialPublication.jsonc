@@ -1,0 +1,46 @@
+{
+  "name": "SocialPublication",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "post_id": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string"
+    },
+    "destination_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "container_id": {
+      "type": "string"
+    },
+    "external_post_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  },
+  "required": [
+    "user_id",
+    "post_id",
+    "platform",
+    "destination_id",
+    "status"
+  ]
+}
