@@ -3,8 +3,8 @@
 import {creditPolicy,creditPacks} from '../base44/functions/cryptid-api/economy.js';
 export const platformTiers = Object.freeze([
  {id:'explorer',name:'Explorer',monthlyCents:0,description:'Discover free posts, follow creators, and save your favorites.',features:['Free community content','Follow and bookmark','Standard text posting']},
- {id:'field-researcher',name:'Field Researcher',monthlyCents:800,description:'A proposed membership for regular contributors.',features:['Explorer features','Premium posting capabilities','Expanded creator tools']},
- {id:'cryptid-creator',name:'Cryptid Creator',monthlyCents:1500,description:'A proposed membership for active cryptid storytellers.',features:['Field Researcher features','Advanced publishing capabilities','Expanded content organization']}
+ {id:'field-researcher',name:'Field Researcher',monthlyCents:800,description:'Proposed member tier for eerie AI stories and expert writing improvements.',features:['Explorer features','AI cryptid story writing (pending)','Story from uploaded image (pending)','AI story editing (pending)']},
+ {id:'cryptid-creator',name:'Cryptid Creator',monthlyCents:1500,description:'Proposed member tier with premium OnlyCryptids visual creation.',features:['Field Researcher features','Realistic cinematic comic AI artwork (pending)']}
 ]);
 export const coinCatalog = Object.freeze({
  name:creditPolicy.name,
