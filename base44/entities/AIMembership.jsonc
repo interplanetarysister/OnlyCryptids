@@ -1,0 +1,56 @@
+{
+  "name": "AIMembership",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "site": {
+      "type": "string"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "provider_subscription_id": {
+      "type": "string"
+    },
+    "provider_merchant_id": {
+      "type": "string"
+    },
+    "verified_payment": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "last_verified_event_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "user_id",
+    "site",
+    "plan_id",
+    "provider",
+    "provider_subscription_id",
+    "provider_merchant_id",
+    "verified_payment",
+    "status",
+    "expires_at"
+  ],
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}
