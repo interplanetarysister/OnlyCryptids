@@ -25,6 +25,35 @@
     },
     "license_version": {
       "type": "string"
+    },
+    "social_links": {
+      "type": "object",
+      "properties": {
+        "reddit": {
+          "type": "string"
+        },
+        "youtube": {
+          "type": "string"
+        },
+        "x": {
+          "type": "string"
+        },
+        "instagram": {
+          "type": "string"
+        },
+        "facebook": {
+          "type": "string"
+        },
+        "threads": {
+          "type": "string"
+        },
+        "bluesky": {
+          "type": "string"
+        },
+        "tumblr": {
+          "type": "string"
+        }
+      }
     }
   },
   "required": [
