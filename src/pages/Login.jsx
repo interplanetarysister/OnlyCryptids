@@ -35,6 +35,10 @@ export default function Login() {
   const handleGoogle = () => {
     base44.auth.loginWithProvider("google", returnTo);
   };
+  const handleFacebook = async () => {
+    try { await base44.auth.loginWithProvider("facebook", returnTo); }
+    catch (err) { setError(err.message || "Facebook sign-in has not been enabled yet."); }
+  };
 
   return (
     <AuthLayout
@@ -61,6 +65,7 @@ export default function Login() {
         <GoogleIcon className="w-5 h-5 mr-2" />
         Continue with Google
       </Button>
+      <Button variant="outline" className="w-full h-12 text-sm font-medium mb-6" onClick={handleFacebook}>Continue with Facebook</Button>
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
