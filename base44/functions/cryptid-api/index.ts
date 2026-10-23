@@ -115,7 +115,13 @@ Deno.serve(async req=>{
     const prior=(await db.SocialPublication.filter({user_id:user.id,post_id:p.id,platform,destination_id:destination}))[0];
     let image_url='';
     if(platform==='instagram'&&!(prior?.status==='processing'&&prior.container_id)){
-      image_url=text(data.image_url,1500,true);
+      image_url=text(data.image_url||'',1500);
+      if(!image_url){
+        const media=await db.MediaAsset.filter({user_id:user.id,post_id:p.id});
+        const picture=media.find((m:any)=>String(m.mime_type||'').startsWith('image/')&&typeof m.file_uri==='string'&&m.file_uri.startsWith('https://')&&m.status!=='deleted');
+        image_url=picture?.file_uri||'';
+      }
+      if(!image_url)throw new RequestError('Add a public image URL or attach a public image to the published post.');
       try{
         const u=new URL(image_url),h=u.hostname.toLowerCase();
         if(u.protocol!=='https:'||u.username||u.password||u.port||!h.includes('.')||h==='localhost'||h.endsWith('.local')||h.endsWith('.internal')||/^[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+$/.test(h))throw new Error();
