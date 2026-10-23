@@ -4,6 +4,6 @@ export function ContentText({text=''}){const parts=String(text).split(/(https?:\
 export function ShareContent({kind,id}){
  const link=()=>new URL(contentHash(kind,id),window.location.href).href;
  const nativeShare=async()=>{const url=link();if(typeof navigator.share==='function'){try{await navigator.share({title:'Only Cryptids',url});return}catch(error){if(error?.name==='AbortError')return}}try{await navigator.clipboard.writeText(url);window.alert('Link copied. Paste it into Facebook or Instagram to share.')}catch{window.prompt('Copy this link to share:',url)}};
- const facebook=()=>{const url='https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(link());const popup=window.open(url,'_blank','noopener,noreferrer');if(!popup)window.location.assign(url)};
+ const facebook=()=>{const url='https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(link());window.location.assign(url)};
  return <div className="form-row" aria-label="Share this content"><button type="button" className="text-button" onClick={()=>{location.hash=contentHash(kind,id)}}>Open shareable link ↗</button><button type="button" className="secondary" onClick={facebook}>Post to Facebook</button><button type="button" className="secondary" onClick={nativeShare}>Share to Instagram or another app</button></div>
 }
