@@ -5,7 +5,7 @@ export const dollars=units=>new Intl.NumberFormat('en-US',{style:'currency',curr
 
 export function SufferingWallet({user,signIn}){
  const [quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
- return <section className="panel"><span className="eyebrow">PLATFORM CREDITS</span><h2>{creditPolicy.name}</h2><p><strong>1 {creditPolicy.name} = $0.25 USD.</strong> Use credits for creator subscriptions and individually priced premium content when payments open.</p><p className="muted">Balance unavailable while funding and spending are inactive. Purchased credits do not grant sweepstakes entries, improve odds or provide member cash redemption.</p><div className="product-grid">{creditPacks.map(p=><button key={p.id} className="secondary" disabled={busy||!configured} onClick={async()=>{if(!user){signIn();return}setBusy(true);setError('');try{setQuote(await api('purchase-quote',{kind:'credits',pack_id:p.id}))}catch(e){setError(e.message)}finally{setBusy(false)}}}>{p.units} {creditPolicy.name} · {dollars(p.units)}</button>)}</div>{quote&&<div className="setup-message"><strong>{quote.units} {creditPolicy.name} · {dollars(quote.units)}</strong><p>Purchase preview only. PayPal funding is not connected; nothing has been charged.</p><button className="primary" disabled>Buy with PayPal — setup pending</button></div>}{error&&<p className="error" role="alert">{error}</p>}</section>
+ return <section className="panel"><span className="eyebrow">PLATFORM CREDITS</span><h2>{creditPolicy.name}</h2><p><strong>1 {creditPolicy.name} = $0.25 USD.</strong> New accounts are planned to receive 5 welcome Suffering; each successful AI generation will cost 1 Suffering. Subscription and premium-post credits require verified payments.</p><p className="muted">The 5-credit welcome grant has not been activated. No credits have been issued. Wallet balances, tipping, AI spending, and PayPal checkout remain unavailable until transactions are protected against duplicate or concurrent spending. Suffering is not withdrawable money and cannot improve prize odds.</p><div className="product-grid">{creditPacks.map(p=><button key={p.id} className="secondary" disabled={busy||!configured} onClick={async()=>{if(!user){signIn();return}setBusy(true);setError('');try{setQuote(await api('purchase-quote',{kind:'credits',pack_id:p.id}))}catch(e){setError(e.message)}finally{setBusy(false)}}}>{p.units} {creditPolicy.name} · {dollars(p.units)}</button>)}</div>{quote&&<div className="setup-message"><strong>{quote.units} {creditPolicy.name} · {dollars(quote.units)}</strong><p>Purchase preview only. PayPal funding is not connected; nothing has been charged.</p><button className="primary" disabled>Buy with PayPal — setup pending</button></div>}{error&&<p className="error" role="alert">{error}</p>}</section>
 }
 
 export function CreatorPlanManager({creator}){
@@ -25,4 +25,32 @@ export function CreatorSubscribe({creator,user,signIn,follow}){
 export function PremiumUnlock({post,user,signIn}){
  const [quote,setQuote]=useState(null),[error,setError]=useState('');
  return <><p>{post.teaser}</p><p><strong>{post.price_suffering} {creditPolicy.name} · {dollars(post.price_suffering||0)}</strong> for this individual post. Creator subscriptions do not include separately priced posts.</p><button className="secondary" onClick={async()=>{if(!user){signIn();return}try{setQuote(await api('purchase-quote',{kind:'premium',post_id:post.id}))}catch(e){setError(e.message)}}}>Review unlock</button>{quote&&<div className="setup-message"><p>Confirmed price: {quote.units} {creditPolicy.name} ({dollars(quote.units)}). No credits have been deducted. Purchases are awaiting payment setup.</p><button className="primary" disabled>Unlock with {creditPolicy.name} — setup pending</button></div>}{error&&<p className="error" role="alert">{error}</p>}</>
+}
+
+export function CreatorEarnings({user,signIn}){
+ const [summary,setSummary]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ useEffect(()=>{if(!configured||!user){setSummary(null);return}let active=true;setBusy(true);api('earnings-summary').then(d=>{if(active)setSummary(d)}).catch(e=>{if(active)setError(e.message)}).finally(()=>{if(active)setBusy(false)});return()=>{active=false}},[user?.id]);
+ const usd=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n||0)/100);
+ return <section className="panel"><span className="eyebrow">CREATOR EARNINGS / PAYPAL</span><h2>Subscription earnings & withdrawals</h2>
+  <p>Only confirmed creator subscription payments may become cash earnings. Suffering credits, tips, AI memberships and unverified purchases are excluded.</p>
+  {!user?<button className="primary" onClick={signIn}>Sign in to see your earnings</button>:busy?<p>Checking your account’s verified records…</p>:summary?<>
+    <div className="stats"><div><small>Available to withdraw</small><strong>{usd(summary.available_cents)}</strong></div><div><small>Pending / held</small><strong>{usd(summary.pending_cents+summary.committed_cents)}</strong></div><div><small>Previously paid</small><strong>{usd(summary.paid_cents)}</strong></div></div>
+    <p className="muted">PayPal integration: {summary.provider_connected?'Merchant identifier configured':'Not connected'} · Creator receiving account: {summary.recipient_connected?'Verified record exists':'Not linked'}</p>
+    <p className="setup-message">{summary.reason}</p>
+    {summary.untrusted_records>0&&<p className="error">Some records could not be verified and were excluded. Contact support for a reconciliation review.</p>}
+    <button className="primary" disabled={!summary.withdrawals_enabled}>Withdraw to PayPal — {summary.withdrawals_enabled?'Available':'awaiting approval'}</button>
+    <h3>Withdrawal history</h3>{summary.history?.length?summary.history.map((item,i)=><p key={i}>{usd(item.amount_cents)} · {item.status} · {item.requested_at?.slice(0,10)||'Date pending'}</p>):<p className="muted">No verified withdrawal history.</p>}
+  </>:<p>Unable to retrieve an earnings summary.</p>}
+  {error&&<p className="error" role="alert">{error}</p>}
+ </section>;
+}
+
+export function SufferingTipQuote({target_kind='post',target_id,user,signIn}){
+ const [units,setUnits]=useState(1),[quote,setQuote]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ return <details className="panel"><summary>Tip with Suffering (preview)</summary><p className="muted">See the intended tip amount without transferring any credits. Tips are not yet active or cash redeemable.</p>
+ <label>Amount<select value={units} onChange={e=>{setUnits(Number(e.target.value));setQuote(null)}}>{[1,2,3,5,10,20].map(n=><option key={n} value={n}>{n} Suffering · {dollars(n)}</option>)}</select></label>
+ <button className="secondary" disabled={busy} onClick={async()=>{if(!user){signIn?.();return}setBusy(true);setError('');try{const v=await api('tip-quote',{target_kind,target_id,units});setQuote(v)}catch(e){setError(e.message)}finally{setBusy(false)}}}>Review tip</button>
+ {quote&&<p className="setup-message">{quote.units} Suffering for {quote.recipient}. No credits sent or deducted. {quote.message}</p>}
+ {error&&<p className="error" role="alert">{error}</p>}
+ </details>;
 }
