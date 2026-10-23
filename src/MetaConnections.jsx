@@ -48,7 +48,7 @@ export default function MetaConnections() {
       return <div className="manage" key={platform}>
         <div>
           <strong>{title}</strong>
-          <small>{item.connected ? item.publish_ready ? 'Identity verified; publishing permissions appear available' : 'Account verified; publishing permission missing'
+          <small>{item.connected ? item.publish_ready ? 'Account verified; the provider checks publication permission when you post' : 'Account verified; publishing is unavailable'
             : item.configured ? 'Not connected or needs reconnection' : 'Member linking not configured yet'}</small>
           {item.username && <small>@{item.username}</small>}
           {Array.isArray(item.pages) && item.pages.length > 0 && <small>Eligible Pages: {item.pages.map(p => p.name).join(', ')}</small>}
