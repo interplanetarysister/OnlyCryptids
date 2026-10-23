@@ -27,7 +27,7 @@ Deno.serve(async req=>{
   if(user?.disabled)user=null;
   // Super-admin access is derived from the authenticated account, never a typed username or email.
   const operatorEmails=new Set(['interplanetarysister@gmail.com','unrewound@gmail.com','cuddlemeplatonically@gmail.com']);
-  const isOperator=Boolean(user?.id&&user?.email&&operatorEmails.has(String(user.email).trim().toLowerCase())&&user.email_verified!==false);
+  const isOperator=Boolean(user?.id&&user?.email&&operatorEmails.has(String(user.email).trim().toLowerCase())&&user.is_verified===true);
   const isElevated=Boolean(user&&(['admin','super_admin'].includes(user.role)||isOperator));
   function auth(){if(!user||user.disabled)throw new RequestError('Sign in to continue.',401);return user}
   function admin(){auth();if(!isElevated)throw new RequestError('Administrator access required.',403)}
