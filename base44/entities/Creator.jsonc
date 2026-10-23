@@ -11,6 +11,9 @@
     "handle": {
       "type": "string"
     },
+    "handle_key": {
+      "type": "string"
+    },
     "bio": {
       "type": "string"
     },
