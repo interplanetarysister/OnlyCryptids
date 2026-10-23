@@ -1,0 +1,48 @@
+{
+  "name": "CreatorPayout",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "creator_id": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "amount_cents": {
+      "type": "integer"
+    },
+    "recipient_provider_id": {
+      "type": "string"
+    },
+    "provider_batch_id": {
+      "type": "string"
+    },
+    "provider_item_id": {
+      "type": "string"
+    },
+    "verified_payout": {
+      "type": "boolean"
+    },
+    "requested_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}
