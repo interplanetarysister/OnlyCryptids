@@ -18,8 +18,7 @@ const average=(list,field)=>list.length?list.reduce((sum,r)=>sum+r[field],0)/lis
 // client source; this is only a provisional community-signal order.
 export function scoreProvisional({post,ratings=[],likes=[],comments=[],tips=[],referrals=[]}){
  const author=post.user_id;
- const eligibleRatings=ratings.filter(r=>r.post_id===post.id&&r.user_id!==author&&
-   starRange(r.creativity)&&starRange(r.fear)&&starRange(r.cryptid));
+ const eligibleRatings=ratings.filter(r=>r.post_id===post.id&&r.user_id!==author&&scoreCategories.every(k=>starRange(r[k])));
  const uniqueRatings=[...new Map(eligibleRatings.map(r=>[r.user_id,r])).values()];
  const verifiedComments=new Set(comments.filter(c=>c.post_id===post.id&&c.status==='visible'&&c.user_id!==author).map(c=>c.user_id)).size;
  const uniqueLikes=new Set(likes.filter(l=>l.target_id===post.id&&l.kind==='like'&&l.user_id!==author).map(l=>l.user_id)).size;
@@ -29,8 +28,8 @@ export function scoreProvisional({post,ratings=[],likes=[],comments=[],tips=[],r
  const engaged=verifiedComments+uniqueLikes;
  const hasRated=uniqueRatings.length>=3;
  const metrics={
-  engagement:clamp(1+Math.floor(Math.log2(1+engaged)),1,5),
-  community_support:clamp(1+Math.floor(Math.log2(1+distinctSupporters)),1,5),
+  engagement:hasRated?clamp(Math.round(average(uniqueRatings,'engagement')),1,5):clamp(1+Math.floor(Math.log2(1+engaged)),1,5),
+  community_support:hasRated?clamp(Math.round(average(uniqueRatings,'community_support')),1,5):clamp(1+Math.floor(Math.log2(1+verifiedComments)),1,5),
   creativity:hasRated?clamp(Math.round(average(uniqueRatings,'creativity')),1,5):null,
   fear:hasRated?clamp(Math.round(average(uniqueRatings,'fear')),1,5):null,
   cryptid:hasRated?clamp(Math.round(average(uniqueRatings,'cryptid')),1,5):null
@@ -43,7 +42,7 @@ export function scoreProvisional({post,ratings=[],likes=[],comments=[],tips=[],r
    r.referee_user_id&&r.referee_user_id!==author&&r.engagement_verified===true).length;
  return {ratings:metrics,rater_count:uniqueRatings.length,likes:uniqueLikes,comments:verifiedComments,
   tip_units:tipUnits,tipper_count:distinctSupporters,referral_engagement:verifiedReferralCount,
-  provisional_score:Math.round(rankScore*100)/100,
+  provisional_score:hasRated?Math.round(rankScore*100)/100:0,
   has_enough_ratings:hasRated};
 }
 export function buildMonthlyBoards({posts=[],creators=[],ratings=[],interactions=[],comments=[],tips=[],referrals=[],month=monthKey(),limit=10}){
