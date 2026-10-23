@@ -1,1 +1,25 @@
-{"name":"only-cryptids","private":true,"version":"0.1.0","type":"module","scripts":{"dev":"vite --host 0.0.0.0","build":"vite build","preview":"vite preview --host 0.0.0.0"},"dependencies":{"@base44/sdk":"^0.8.57","@base44/vite-plugin":"^1.0.47","leaflet":"^1.9.4","lucide-react":"^1.61.0","react":"^19.3.1","react-dom":"^19.3.1"},"devDependencies":{"base44":"^0.2.2","deno":"^2.9.6","vite":"^8.3.5"}}
+{
+  "name": "only-cryptids",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:ai": "node --test scripts/ai-policy.test.mjs"
+  },
+  "dependencies": {
+    "@base44/sdk": "^0.8.57",
+    "@base44/vite-plugin": "^1.0.47",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "base44": "^0.2.2",
+    "deno": "^2.9.6",
+    "vite": "^8.3.5"
+  }
+}
