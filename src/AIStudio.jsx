@@ -2,6 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {Sparkles,Image as ImageIcon,BookOpen,PenLine,Copy,ShieldCheck} from 'lucide-react';
 import {api,configured} from './api';
 import {aiPlans,aiModes,aiTones,aiArtStyles,aiAudienceInterests,makeOnlyCryptidsBrief} from '../base44/functions/cryptid-api/onlycryptids-ai.js';
+import {creditPolicy} from '../base44/functions/cryptid-api/economy.js';
 
 const money=cents=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100);
 const pretty=s=>s.replaceAll('-', ' ').replace(/\b\w/g,ch=>ch.toUpperCase());
@@ -83,7 +84,7 @@ export default function AIStudio({user,signIn}){
    </div>
    <p className="muted">These prices are drafts, not purchasable plans. The intended business recipient is cuddlemeplatonically@gmail.com. Creator subscriptions are separate and do not unlock AI.</p>
    {catalog?.subscription&&<p><ShieldCheck size={16}/> Verified AI membership: {pretty(catalog.subscription.plan_id)}. Current period ends {new Date(catalog.subscription.expires_at).toLocaleDateString()}.</p>}
-   {!catalog?.generation_enabled&&<p className="setup-message">Paid AI generation and checkout are not active. You can prepare and copy a creative brief below for free, without using AI credits.</p>}
+   {!catalog?.generation_enabled&&<p className="setup-message">The proposed price is 1 Suffering per successful AI generation, with 5 welcome Suffering for new accounts. No credits have been issued, and generation/checkout are not active. You can prepare a free creative brief below.</p>}
   </section>
   <section className="panel">
    <h3>OnlyCryptids creation studio</h3>
@@ -121,7 +122,7 @@ export default function AIStudio({user,signIn}){
     <details><summary>View complete writing and art instructions</summary><pre className="brief-text">{brief.system+'\n\n'+brief.user}</pre></details>
     <div className="form-row">
      <button className="secondary" onClick={()=>{(navigator.clipboard?.writeText?.(brief.system+'\n\n'+brief.user)||Promise.reject(new Error('Clipboard unavailable'))).then(()=>setMessage('Creative brief copied.')).catch(()=>setError('Copy was not permitted by your browser.'))}}><Copy size={16}/>Copy brief</button>
-     <button className="primary" disabled={!catalog?.generation_enabled||busy||!user} onClick={generate}>Generate with subscription — {catalog?.generation_enabled?'Ready':'Not active'}</button>
+     <button className="primary" disabled={!catalog?.generation_enabled||busy||!user} onClick={generate}>Generate for {creditPolicy.aiGenerationUnits} Suffering — {catalog?.generation_enabled?'Ready':'Not active'}</button>
     </div>
    </section>}
   </section>
