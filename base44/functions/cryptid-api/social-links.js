@@ -35,7 +35,7 @@ export function normalizeSocialLink(network,value){
   }
   if(network==='youtube'&&/^[a-zA-Z0-9_.-]{3,30}$/.test(clean))return 'https://www.youtube.com/@'+clean;
   if(network==='x'&&/^[A-Za-z0-9_]{1,15}$/.test(clean))return 'https://x.com/'+clean;
-  if((network==='instagram'||network==='threads')&&/^[A-Za-z0-9._]{1,30}$/.test(clean))return 'https://www.'+(network==='threads'?'threads.net':'instagram.com')+'/@'.repeat(network==='threads')+clean+'/';
+  if((network==='instagram'||network==='threads')&&/^[A-Za-z0-9._]{1,30}$/.test(clean))return 'https://www.'+(network==='threads'?'threads.net':'instagram.com')+'/'+(network==='threads'?'@':'')+clean+'/';
   if(network==='facebook'&&safeSlug(clean))return 'https://www.facebook.com/'+clean;
   if(network==='bluesky'&&/^[a-zA-Z0-9.-]{4,90}$/.test(clean))return 'https://bsky.app/profile/'+clean;
   if(network==='tumblr'&&/^[a-zA-Z0-9-]{3,32}(?:\.tumblr\.com)?$/.test(clean)){
