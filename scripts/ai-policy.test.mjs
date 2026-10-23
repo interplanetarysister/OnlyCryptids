@@ -44,6 +44,6 @@ test('short editing submissions and blank submissions are rejected',()=>{
 });
 test('photo-story preview does not falsely claim image pixel analysis',()=>{
  const b=makeOnlyCryptidsBrief({mode:'photo-story',imageContext:'A silhouette in an old family picture.'});
- assert.match(b.user,/no image pixels have been examined/);
+ assert.match(b.system,/Never claim to have analyzed pixels/);
  assert.equal(b.imageRequired,true);
 });
