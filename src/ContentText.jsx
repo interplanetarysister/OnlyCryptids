@@ -1,15 +1,27 @@
 import React, {useState} from 'react';
 import {internalContentLink,contentHash} from './content-links';
+import {publicSocialLink,externalShareUrl} from '../base44/functions/cryptid-api/social-links.js';
 
 export function ContentText({text=''}) {
- const parts=String(text).split(/(https?:\/\/[^\s<>]+|#(?:post|thread|community)=[A-Za-z0-9_.%-]+|#[A-Za-z][A-Za-z0-9_]{0,39})/g);
+ const pattern=/(https?:\/\/[^\s<>]+|#(?:post|thread|community)=[A-Za-z0-9_.%-]+|@c\/[a-z0-9_]{3,30}|@[A-Za-z0-9_-]{3,30}|#[A-Za-z][A-Za-z0-9_]{0,39})/gi;
+ const parts=String(text).split(pattern);
  return <>{parts.map((part,i)=>{
    const trimmed=part.replace(/[.,;!?)]*$/,'');
-   const href=internalContentLink(trimmed,location.origin);
-   return /^#[A-Za-z][A-Za-z0-9_]{0,39}$/.test(trimmed)
-     ? <a key={i} className="content-link" href={'#tag='+encodeURIComponent(trimmed.slice(1).toLowerCase())}>{trimmed}</a>
-     : href?<React.Fragment key={i}><a className="content-link" href={href}>{trimmed}</a>{part.slice(trimmed.length)}</React.Fragment>
-     : <React.Fragment key={i}>{part}</React.Fragment>;
+   const tail=part.slice(trimmed.length);
+   if(/^#[A-Za-z][A-Za-z0-9_]{0,39}$/.test(trimmed)){
+     return <React.Fragment key={i}><a className="content-link" href={'#tag='+encodeURIComponent(trimmed.slice(1).toLowerCase())}>{trimmed}</a>{tail}</React.Fragment>;
+   }
+   if(/^@c\/[a-z0-9_]{3,30}$/i.test(trimmed)){
+     return <React.Fragment key={i}><a className="content-link" href={'#community-handle='+encodeURIComponent(trimmed.slice(3).toLowerCase())}>{trimmed}</a>{tail}</React.Fragment>;
+   }
+   if(/^@[A-Za-z0-9_-]{3,30}$/.test(trimmed)){
+     return <React.Fragment key={i}><a className="content-link" href={'#member='+encodeURIComponent(trimmed.slice(1).toLowerCase())}>{trimmed}</a>{tail}</React.Fragment>;
+   }
+   const internal=internalContentLink(trimmed,location.origin);
+   if(internal)return <React.Fragment key={i}><a className="content-link" href={internal}>{trimmed}</a>{tail}</React.Fragment>;
+   const external=publicSocialLink(trimmed);
+   if(external)return <React.Fragment key={i}><a className="content-link" href={external} target="_blank" rel="noopener noreferrer nofollow ugc">{trimmed} ↗</a>{tail}</React.Fragment>;
+   return <React.Fragment key={i}>{part}</React.Fragment>;
  })}</>;
 }
 
@@ -66,8 +78,10 @@ export function ShareContent({kind,id,title='A story from Only Cryptids'}) {
  return <div>
    <div className="form-row" aria-label="Share this content">
      <a className="secondary" href={link()} target="_blank" rel="noopener noreferrer">Open shareable link</a>
-     <a className="secondary" href={'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(link())} target="_blank" rel="noopener noreferrer">Share on Facebook</a>
-     <button type="button" className="secondary" onClick={shareLink}>Share link</button>
+     <a className="secondary" href={externalShareUrl('facebook',title,link())} target="_blank" rel="noopener noreferrer">Share on Facebook</a>
+     <a className="secondary" href={externalShareUrl('reddit',title,link())} target="_blank" rel="noopener noreferrer">Share on Reddit</a>
+     <a className="secondary" href={externalShareUrl('x',title,link())} target="_blank" rel="noopener noreferrer">Share on X</a>
+     <button type="button" className="secondary" onClick={shareLink}>Share link to YouTube, forums or another app</button>
      <button type="button" className="secondary" onClick={shareImage}>Share picture to Instagram or another app</button>
    </div>
    {status&&<p className="muted" role="status">{status}</p>}
