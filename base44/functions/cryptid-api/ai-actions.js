@@ -53,8 +53,8 @@ export async function handleAIAction({action,data,user,db,headers,audit,RequestE
   }
   try{
    const brief=makeOnlyCryptidsBrief({...data,protectedTerms:[
-     ...normalizeProtectedTerms(data.protectedTerms),...(enabled?p.protected_terms||[]:[])
-   ]},{interests:enabled?p.interests:[],writingSamples});
+     ...normalizeProtectedTerms(data.protectedTerms),...(p?.protected_terms||[])
+   ]},{interests:p?.interests||[],writingSamples});
    return ok({brief,charged:false,model_called:false,image_analyzed:false});
   }catch(e){throw new RequestError(e instanceof Error?e.message:'Unable to prepare your brief.',400)}
  }
