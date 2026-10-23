@@ -24,7 +24,7 @@ export const aiArtStyles = Object.freeze({
 });
 export function normalizeProtectedTerms(raw){
  const arr=Array.isArray(raw)?raw:String(raw||'').split(/[,\n]/);
- return [...new Set(arr.map(v=>String(v).trim()).filter(v=>v&&v.length<=70&&/^[\p{L}\p{N} .'-]+$/u.test(v)))].slice(0,30);
+ return [...new Set(arr.map(v=>String(v).trim()).filter(v=>v&&v.length<=70&&/^[\p{L}\p{M}\p{N}_ .’'-]+$/u.test(v)))].slice(0,30);
 }
 function bounded(v,max){return String(v??'').trim().slice(0,max)}
 export function makeOnlyCryptidsBrief(input,context={}){
