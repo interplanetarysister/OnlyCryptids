@@ -107,15 +107,15 @@ Deno.serve(async req=>{
     const destination=platform==='facebook'?metaId(data.page_id):metaId(session.id);
     const page=platform==='facebook'?session._pages.find((v:any)=>String(v.id)===destination):null;
     if(platform==='facebook'&&!page)throw new RequestError('Select a Page you have permission to publish to.',403);
+    const prior=(await db.SocialPublication.filter({user_id:user.id,post_id:p.id,platform,destination_id:destination}))[0];
     let image_url='';
-    if(platform==='instagram'){
+    if(platform==='instagram'&&!(prior?.status==='processing'&&prior.container_id)){
       image_url=text(data.image_url,1500,true);
       try{
         const u=new URL(image_url),h=u.hostname.toLowerCase();
         if(u.protocol!=='https:'||u.username||u.password||u.port||!h.includes('.')||h==='localhost'||h.endsWith('.local')||h.endsWith('.internal')||/^[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+$/.test(h))throw new Error();
       }catch{throw new RequestError('Instagram publishing needs a public HTTPS image URL.')}
     }
-    const prior=(await db.SocialPublication.filter({user_id:user.id,post_id:p.id,platform,destination_id:destination}))[0];
     if(prior&&!(platform==='instagram'&&prior.status==='processing'&&prior.container_id)){
       return ok({status:prior.status,success:prior.status==='published',external_post_id:prior.status==='published'?prior.external_post_id:undefined,message:prior.status==='published'?'This post has already been published to this account.':'Previous submission may have reached the provider. Check there before retrying.'});
     }
