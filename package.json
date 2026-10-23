@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test:ai": "node --test scripts/ai-policy.test.mjs",
-    "test": "node --test scripts/ai-policy.test.mjs scripts/social-linking.test.mjs"
+    "test": "node --test scripts/ai-policy.test.mjs scripts/social-linking.test.mjs scripts/suffering-economy.test.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.57",
