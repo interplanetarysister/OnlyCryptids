@@ -120,7 +120,7 @@ export default function AIStudio({user,signIn}){
     <p className="muted">This is a writing and art direction brief, not a generated story or image. In image mode, no uploaded image pixels have been analyzed.</p>
     <details><summary>View complete writing and art instructions</summary><pre className="brief-text">{brief.system+'\n\n'+brief.user}</pre></details>
     <div className="form-row">
-     <button className="secondary" onClick={()=>{navigator.clipboard?.writeText(brief.system+'\n\n'+brief.user).then(()=>setMessage('Creative brief copied.')).catch(()=>setError('Copy was not permitted by your browser.'))}}><Copy size={16}/>Copy brief</button>
+     <button className="secondary" onClick={()=>{(navigator.clipboard?.writeText?.(brief.system+'\n\n'+brief.user)||Promise.reject(new Error('Clipboard unavailable'))).then(()=>setMessage('Creative brief copied.')).catch(()=>setError('Copy was not permitted by your browser.'))}}><Copy size={16}/>Copy brief</button>
      <button className="primary" disabled={!catalog?.generation_enabled||busy||!user} onClick={generate}>Generate with subscription — {catalog?.generation_enabled?'Ready':'Not active'}</button>
     </div>
    </section>}
