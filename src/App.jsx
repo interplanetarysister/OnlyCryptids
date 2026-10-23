@@ -40,7 +40,7 @@ export default function App(){
  const [activeTag,setActiveTag]=useState(''),[darkCategory,setDarkCategory]=useState(''),[darkTag,setDarkTag]=useState(''),[lane,setLane]=useState('All'),[hideAI,setHideAI]=useState(false),[feedOrder,setFeedOrder]=useState('newest');
  const own=user?creators.find(c=>c.user_id===user.id):null;
  const go=p=>{setPage(p);setProfile(null);setMobile(false);location.hash=p;window.scrollTo({top:0})};
- useEffect(()=>{const on=()=>{const route=parseContentHash(location.hash);setProfile(null);if(route){if(route.kind==='post'){setPage('Home');if(!loading){const p=posts.find(p=>p.id===route.id);if(p)viewPost(p);else perform(async()=>{const d=await api('post',{id:route.id});setSelectedPost(d.post)})}}else{setPage('Forums');setSelectedPost(null)}}else setPage(location.hash.slice(1)||'Home')};on();addEventListener('hashchange',on);return()=>removeEventListener('hashchange',on)},[loading]);
+ useEffect(()=>{const on=()=>{if(/^#(?:tag|member|community-handle)=/i.test(location.hash))return;const route=parseContentHash(location.hash);setProfile(null);if(route){if(route.kind==='post'){setPage('Home');if(!loading){const p=posts.find(p=>p.id===route.id);if(p)viewPost(p);else perform(async()=>{const d=await api('post',{id:route.id});setSelectedPost(d.post)})}}else{setPage('Forums');setSelectedPost(null)}}else setPage(location.hash.slice(1)||'Home')};on();addEventListener('hashchange',on);return()=>removeEventListener('hashchange',on)},[loading]);
  async function refresh(){if(!configured)return;setLoading(true);setError('');try{const d=await api('bootstrap');setCreators(d.creators);setPosts(d.posts);setUser(d.user);setMine(d.mine)}catch(e){setError(e.message)}finally{setLoading(false)}}
  useEffect(()=>{let active=true;const route=()=>{
  const match=/^#tag=([a-z][a-z0-9_]{0,39})$/i.exec(location.hash);
@@ -51,7 +51,7 @@ export default function App(){
    api('mention-resolve',{handle:mentioned[2],kind:mentioned[1]==='member'?'auto':'community'})
     .then(found=>{if(!active||location.hash.toLowerCase()!==mentioned[0].toLowerCase())return;
       if(found.kind==='community')location.hash=contentHash('community',found.id);
-      else{setProfile(found.creator);setPage('Profile');setMobile(false);window.scrollTo({top:0})}
+      else{setSelectedPost(null);setProfile(found.creator);setPage('Profile');setMobile(false);window.scrollTo({top:0})}
     }).catch(e=>{if(active)setNotice(e.message)});
  }
  };route();addEventListener('hashchange',route);return()=>{active=false;removeEventListener('hashchange',route)}},[]);
