@@ -70,6 +70,10 @@ export default function Register() {
   const handleGoogle = () => {
     base44.auth.loginWithProvider("google", safeReturnTo());
   };
+  const handleFacebook = async () => {
+    try { await base44.auth.loginWithProvider("facebook", safeReturnTo()); }
+    catch (err) { setError(err.message || "Facebook sign-in has not been enabled yet."); }
+  };
 
   if (showOtp) {
     return (
@@ -150,6 +154,7 @@ export default function Register() {
         <GoogleIcon className="w-5 h-5 mr-2" />
         Continue with Google
       </Button>
+      <Button variant="outline" className="w-full h-12 text-sm font-medium mb-6" onClick={handleFacebook}>Continue with Facebook</Button>
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
