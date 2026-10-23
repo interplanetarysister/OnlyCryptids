@@ -1,0 +1,36 @@
+{
+  "name": "CreatorPayoutProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "creator_id": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "provider_account_id": {
+      "type": "string"
+    },
+    "provider_verification": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "verified": {
+      "type": "boolean"
+    },
+    "connected_at": {
+      "type": "string"
+    }
+  },
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}
