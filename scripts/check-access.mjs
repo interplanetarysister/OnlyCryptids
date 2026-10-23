@@ -4,7 +4,9 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {transformWithOxc} from 'vite';
-import {creditPolicy,creditPacks,creditCost} from '../base44/functions/cryptid-api/economy.js';
+import {creditPolicy,creditPacks,creditCost,generationQuote,tipQuote} from '../base44/functions/cryptid-api/economy.js';
+import {reconcileEarnings} from '../base44/functions/cryptid-api/creator-finance.js';
+import {buildMonthlyBoards,scoreCategories,starRange} from '../base44/functions/cryptid-api/leaderboard.js';
 import {parseContentHash,internalContentLink} from '../src/content-links.js';
 import {cryptidTaxonomy,validSubcategory} from '../base44/functions/cryptid-api/taxonomy.js';
 import {normalizeSocialProfiles,recognizedNetworks,extractHashtags} from '../base44/functions/cryptid-api/social-links.js';
@@ -33,11 +35,42 @@ async function run(action,payload={},options={}){
  const sandbox={Deno:{serve:fn=>{handler=fn},env:{get:()=>''}},Response,TextEncoder,crypto:webcrypto,console,
   normalizeSocialProfiles,recognizedNetworks,extractHashtags,handleSocialAction,handleAIAction,
   createClientFromRequest:()=>({auth:{me:async()=>user,loginViaEmailPassword:async()=>{if(options.loginResponse)return options.loginResponse;throw new Error('Invalid credentials')}},asServiceRole:{entities:db}}),
-  renderCreatorLicense:()=>'',licenseReady:()=>options.agreementReady===true,licenseVersion:'test',creditPolicy,creditPacks,creditCost,cryptidTaxonomy,validSubcategory};
+  renderCreatorLicense:()=>'',licenseReady:()=>options.agreementReady===true,licenseVersion:'test',creditPolicy,creditPacks,creditCost,generationQuote,tipQuote,reconcileEarnings,buildMonthlyBoards,scoreCategories,starRange,cryptidTaxonomy,validSubcategory};
  vm.runInNewContext(compiled.code,sandbox);
  const response=await handler(new Request('https://example.invalid',{method:'POST',headers:options.headers,body:JSON.stringify({action,...payload})}));
  return {status:response.status,data:await response.json(),writes};
 }
+
+let next=await run('earnings-summary',{user_id:'other'},{user:null});
+assert.equal(next.status,401);assert.equal(next.writes.length,0);
+next=await run('earnings-summary',{}, {tables:{Creator:[{id:'cReader',user_id:'reader',status:'active'}]}});
+assert.equal(next.status,200);assert.equal(next.data.available_cents,0);
+assert.equal(next.data.provider_connected,false);assert.equal(next.data.withdrawals_enabled,false);assert.equal(next.writes.length,0);
+next=await run('payout-request',{amount_cents:9999999,creator_id:'other'},{user:null});
+assert.equal(next.status,401);assert.equal(next.writes.length,0);
+next=await run('payout-request',{amount_cents:100,recipient:'attacker'});
+assert.equal(next.status,503);assert.equal(next.writes.length,0);
+next=await run('credit-catalog');
+assert.equal(next.data.welcome_suffering,5);assert.equal(next.data.ai_generation_cost,1);assert.equal(next.data.spending_enabled,false);
+next=await run('generation-quote',{mode:'story'});
+assert.equal(next.data.units,1);assert.equal(next.data.spending_enabled,false);assert.equal(next.writes.length,0);
+next=await run('tip-quote',{target_kind:'post',target_id:'p1',units:2},{tables:{Creator:[{id:'creator1',user_id:'author',status:'active',display_name:'Author'}]}});
+assert.equal(next.status,200);assert.equal(next.data.units,2);assert.equal(next.data.tip_enabled,false);assert.equal(next.writes.length,0);
+next=await run('tip-quote',{target_kind:'post',target_id:'p1',units:1},{user:{id:'author',role:'user'},tables:{Creator:[{id:'creator1',user_id:'author',status:'active'}]}});
+assert.equal(next.status,403);assert.equal(next.writes.length,0);
+next=await run('tip-send',{target_id:'p1',units:100});
+assert.equal(next.status,503);assert.equal(next.writes.length,0);
+next=await run('leaderboard-month',{month:'2026-10'},{tables:{Creator:[{id:'creator1',status:'active',user_id:'author',handle:'author'}],Post:[{id:'p1',creator_id:'creator1',user_id:'author',created_date:'2026-10-01',status:'published',visibility:'free',format:'Story',label:'Fiction'}]}});
+assert.equal(next.status,200);assert.equal(next.data.prize_winner,null);assert.equal(next.data.lanes['human-stories'].length,1);assert.equal(next.writes.length,0);
+next=await run('leaderboard-rate',{post_id:'p1',engagement:4,community_support:5,creativity:4,fear:3,cryptid:5},{user:null});
+assert.equal(next.status,401);assert.equal(next.writes.length,0);
+next=await run('leaderboard-rate',{post_id:'p1',engagement:4,community_support:5,creativity:4,fear:3,cryptid:5},{user:{id:'author',role:'user'}});
+assert.equal(next.status,403);assert.equal(next.writes.length,0);
+next=await run('leaderboard-rate',{post_id:'p1',engagement:4,community_support:5,creativity:4,fear:3,cryptid:5,user_id:'author'});
+assert.equal(next.status,200);assert.equal(next.writes[0].entity,'ContestRating');assert.equal(next.writes[0].fields.user_id,'reader');
+next=await run('leaderboard-rate',{post_id:'p1',engagement:4,community_support:5,creativity:4,fear:3,cryptid:5},{post:{visibility:'subscribers'}});
+assert.equal(next.status,403);assert.equal(next.writes.length,0);
+
 let result=await run('comment-remove',{id:'c1'});
 assert.equal(result.status,403);assert.equal(result.writes.length,0);
 result=await run('comment-remove',{id:'c1'},{user:null});
