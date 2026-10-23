@@ -69,11 +69,13 @@ export function MetaPublisher({ postId }) {
   const [facebookPage, setFacebookPage] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [notice, setNotice] = useState('');
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const post = async (platform) => {
+    if (!rightsConfirmed) { setError('Confirm that you have permission to share the content and media.'); return; }
     setBusy(true); setError(''); setNotice('');
     try {
       const result = await api('meta-publish', {
-        platform, post_id: postId, page_id: facebookPage, image_url: imageUrl, rights_confirmed: true,
+        platform, post_id: postId, page_id: facebookPage, image_url: imageUrl, rights_confirmed: rightsConfirmed,
       });
       if (result.status === 'published' && result.success) setNotice('The provider confirmed publication.');
       else setNotice(result.message || 'The provider has not confirmed publication yet.');
@@ -86,17 +88,18 @@ export function MetaPublisher({ postId }) {
     <p>Direct publishing uses the social account you authorized in Settings. It never posts to someone else's account. Posting happens only when you press Publish here.</p>
     {error && <p role="alert" className="error">{error}</p>}
     {notice && <p role="status">{notice}</p>}
+    <label className="check"><input type="checkbox" checked={rightsConfirmed} onChange={e => setRightsConfirmed(e.target.checked)}/>I have permission to share this post and any image.</label>
     {accounts?.facebook?.publish_ready
       ? <><label>Facebook Page<select value={facebookPage} onChange={e => setFacebookPage(e.target.value)}>
           <option value="">Choose the Page you manage</option>
           {pages.map(page => <option key={page.id} value={page.id}>{page.name}</option>)}
         </select></label>
-        <button type="button" className="secondary" disabled={busy || !facebookPage} onClick={() => post('facebook')}>Publish this post to Facebook Page</button></>
+        <button type="button" className="secondary" disabled={busy || !facebookPage || !rightsConfirmed} onClick={() => post('facebook')}>Publish this post to Facebook Page</button></>
       : <p className="muted">Facebook Page publishing needs a verified member connection with posting permission.</p>}
     {accounts?.instagram?.publish_ready
       ? <><label>Public image URL for Instagram<input type="url" required placeholder="https://example.com/image.jpg" value={imageUrl} onChange={e => setImageUrl(e.target.value)} maxLength={1500}/></label>
         <small>Instagram publishing requires an image accessible over HTTPS. Only provide media you have rights to share.</small>
-        <button type="button" className="secondary" disabled={busy || !imageUrl} onClick={() => post('instagram')}>Publish image to Instagram</button></>
+        <button type="button" className="secondary" disabled={busy || !rightsConfirmed} onClick={() => post('instagram')}>Publish image to Instagram</button></>
       : <p className="muted">Instagram API publishing needs a verified Business or Creator account. You can still use the device's Share image option.</p>}
     <button type="button" className="text-button" disabled={busy} onClick={refresh}>Check connections again</button>
   </details>;
