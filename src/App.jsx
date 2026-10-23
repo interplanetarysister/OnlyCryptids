@@ -67,7 +67,7 @@ export default function App(){
  {page==='Encounter map'&&<React.Suspense fallback={<p>Loading encounter map…</p>}><EncounterMap user={user} posts={posts.filter(p=>p.can_edit===true).map(p=>({...p,user_id:user?.id}))} signIn={()=>setModal('Sign in')} createPost={()=>requireUser(()=>setModal('Create post'))} openPost={viewPost} onSaved={refresh}/></React.Suspense>}
  {page==='Forums'&&<Forums user={user} signIn={()=>setModal('Sign in')}/>}
  {page==='Suffering'&&<SufferingWallet user={user} signIn={()=>setModal('Sign in')}/>}
- {page==='Creation lab'&&<CreationLab/>}
+ {page==='Creation lab'&&<CreationLab user={user} signIn={()=>setModal('Sign in')}/>}
  {page==='Shop'&&<ShopPreview/>}
  {page==='Creator license'&&<CreatorLicense/>}
  {page==='Settings'&&<><MonetizationSetup user={user}/><BlockedAccounts user={user} onChange={refresh}/><DonationSetup/>{user&&<MetaConnections/>}</>}
