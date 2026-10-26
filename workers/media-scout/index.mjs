@@ -104,20 +104,24 @@ async function collect(env) {
   const nextOffset = control.search_offset + BATCH;
   const exhausted = !payload.continue?.gsroffset || nextOffset > 240;
   await env.MEDIA_DB.prepare(
-    "UPDATE scout_control SET term_index=?, search_offset=?, last_run=datetime('now'), last_added=? WHERE id=1"
+    "UPDATE scout_control SET term_index=?, search_offset=?, last_run=datetime('now'), last_added=?, last_error=NULL WHERE id=1"
   ).bind(exhausted ? control.term_index + 1 : control.term_index,
     exhausted ? 0 : nextOffset, added).run();
   return {status:'running',topic:topic[0],added};
 }
 export default {
-  async scheduled(_event,env,ctx) { ctx.waitUntil(collect(env)); },
+  async scheduled(_event,env,ctx) { ctx.waitUntil(collect(env).catch(async error => {
+    console.error('OnlyCryptids media scout failed',String(error));
+    await env.MEDIA_DB.prepare("UPDATE scout_control SET last_run=datetime('now'), last_added=0, last_error=? WHERE id=1")
+      .bind(String(error?.message||error).slice(0,180)).run();
+  })); },
   async fetch(request,env) {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return response({});
     if (request.method !== 'GET') return response({error:'Method not allowed'},405);
     if (url.pathname === '/api/status') {
-      const row = await env.MEDIA_DB.prepare('SELECT enabled,last_run,last_added FROM scout_control WHERE id=1').first();
-      return response({enabled:row?.enabled===1,last_run:row?.last_run||null,last_added:row?.last_added||0});
+      const row = await env.MEDIA_DB.prepare('SELECT enabled,last_run,last_added,last_error FROM scout_control WHERE id=1').first();
+      return response({enabled:row?.enabled===1,last_run:row?.last_run||null,last_added:row?.last_added||0,error:row?.last_error||null});
     }
     if (url.pathname === '/api/posts') {
       const limit = Math.min(30,Math.max(1,Number.parseInt(url.searchParams.get('limit')||'12',10)||12));
