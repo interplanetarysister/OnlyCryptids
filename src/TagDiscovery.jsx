@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {api,configured} from './api';
 import {contentHash} from './content-links';
+import CuratedMedia from './CuratedMedia';
 export default function TagDiscovery({tag}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  useEffect(()=>{
@@ -34,5 +35,6 @@ export default function TagDiscovery({tag}){
    {!data.posts.length&&!data.threads.length&&<p className="muted">No public stories or discussions with this tag were found in the most recent results.</p>}
    <small>{data.scope}{data.has_more?' Additional older matches may exist.':''}</small>
   </>}
+  <CuratedMedia tag={tag}/>
  </section>;
 }
