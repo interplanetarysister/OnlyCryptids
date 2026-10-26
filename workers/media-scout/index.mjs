@@ -69,6 +69,50 @@ function curated(page, topic) {
     author, license_name: license.name, license_url: license.url
   };
 }
+// Openverse is an independent openly-licensed image index. Use its public API
+// when Commons refuses automated API access; never bypass the 403.
+function curatedOpenverse(item, topic) {
+  if (!item || item.mature || typeof item.id!=='string' || !/^[a-f0-9-]{36}$/i.test(item.id)) return null;
+  const licenses = {'by':'CC BY', 'by-sa':'CC BY-SA', cc0:'CC0', pdm:'Public domain'};
+  const licenseName = licenses[String(item.license||'').toLowerCase()];
+  if (!licenseName) return null;
+  const source = safeHttps(item.foreign_landing_url);
+  const media = safeHttps(item.url);
+  if (!source || !media) return null;
+  const author = stripMarkup(item.creator,180);
+  if (!author) return null;
+  const licenseUrl = safeHttps(item.license_url);
+  if (!licenseUrl && !['cc0','pdm'].includes(item.license)) return null;
+  const title = stripMarkup(item.title||topic[1],130);
+  if (title.length<5) return null;
+  const tag = topic[0], category = topic[2];
+  return {
+    id:'openverse-'+item.id, source, media, kind:'image',
+    topic:tag, category, tags:[...new Set(['content','cryptids',tag,category.toLowerCase().replace(/\\s+/g,'_')])],
+    title, caption:'A licensed image indexed by Openverse on the subject of '+topic[1]+
+      '. This is a credited reference, not confirmation of an encounter.',
+    alt:'Licensed source image: '+title, author, license_name:licenseName, license_url:licenseUrl||source
+  };
+}
+function safeHttps(value) {
+  try {
+    const u=new URL(value);
+    return u.protocol==='https:'&&!u.username&&!u.password?u.href:null;
+  } catch { return null; }
+}
+async function searchOpenverse(topic,offset) {
+  const u=new URL('https://api.openverse.org/v1/images/');
+  u.searchParams.set('q',topic[1]);
+  u.searchParams.set('page_size','12');
+  u.searchParams.set('page',String(Math.floor(offset/BATCH)+1));
+  u.searchParams.set('license','by,by-sa,cc0,pdm');
+  const r=await fetch(u,{headers:{accept:'application/json'},signal:AbortSignal.timeout(15000)});
+  if(!r.ok)throw new Error('Openverse returned HTTP '+r.status);
+  const body=await r.json();
+  return {pages:(body.results||[]).map(x=>curatedOpenverse(x,topic)).filter(Boolean),
+          hasMore:(body.page||0)<(body.page_count||0)};
+}
+
 function response(obj, status = 200) {
   return new Response(JSON.stringify(obj), {status, headers:{
     'content-type':'application/json; charset=utf-8',
@@ -89,18 +133,27 @@ async function collect(env) {
     gsroffset:String(control.search_offset),prop:'imageinfo',
     iiprop:'url|mime|extmetadata',iiextmetadatalanguage:'en'
   })) url.searchParams.set(k,v);
+  let results, hasMore;
   const remote = await fetch(url, {headers:{
     'accept':'application/json',
     'api-user-agent':'OnlyCryptidsMediaScout/1.0 (https://github.com/interplanetarysister/OnlyCryptids)'
   }, signal: AbortSignal.timeout(15000)});
-  if (!remote.ok) throw new Error('Commons returned HTTP ' + remote.status);
-  const payload = await remote.json();
-  if (payload.error) throw new Error('Commons API: ' + stripMarkup(payload.error.info, 120));
-  const pages = Object.values(payload.query?.pages || {});
+  if (remote.status===403) {
+    // Respect the Commons refusal. Openverse provides separate licensed data.
+    const other=await searchOpenverse(topic,control.search_offset);
+    results=other.pages;
+    hasMore=other.hasMore;
+  } else {
+    if (!remote.ok) throw new Error('Commons returned HTTP ' + remote.status);
+    const payload = await remote.json();
+    if (payload.error) throw new Error('Commons API: ' + stripMarkup(payload.error.info, 120));
+    results=Object.values(payload.query?.pages || {}).map(page=>curated(page,topic)).filter(Boolean);
+    hasMore=Boolean(payload.continue?.gsroffset);
+  }
   let added = 0;
-  for (const page of pages) {
+  for (const page of results) {
     if (added >= LIMIT) break;
-    const p = curated(page, topic);
+    const p = page;
     if (!p) continue;
     const result = await env.MEDIA_DB.prepare(
       "INSERT OR IGNORE INTO sourced_media (id, source_url, media_url, kind, topic, category, tags_json, title, caption, alt_text, author_credit, license_name, license_url, published_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))"
@@ -108,7 +161,7 @@ async function collect(env) {
     if (result.meta?.changes) added += 1;
   }
   const nextOffset = control.search_offset + BATCH;
-  const exhausted = !payload.continue?.gsroffset || nextOffset > 240;
+  const exhausted = !hasMore || nextOffset > 240;
   await env.MEDIA_DB.prepare(
     "UPDATE scout_control SET term_index=?, search_offset=?, last_run=datetime('now'), last_added=?, last_error=NULL WHERE id=1"
   ).bind(exhausted ? control.term_index + 1 : control.term_index,
