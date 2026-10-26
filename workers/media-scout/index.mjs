@@ -5,13 +5,18 @@
  * No paid models, account credentials, or unattended scraping.
  */
 const TOPICS = [
-  ['bigfoot','Bigfoot'],['mothman','Mothman'],['yeti','Yeti'],
-  ['loch_ness','Loch Ness monster'],['chupacabra','Chupacabra'],
-  ['jersey_devil','Jersey Devil'],['sea_serpent','sea serpent'],
-  ['thunderbird','Thunderbird cryptid'],['bunyip','Bunyip'],
-  ['alien','alien encounter'],['ufo','UFO sighting'],
-  ['cryptid','cryptozoology'],['ogopogo','Ogopogo'],
-  ['mokele_mbembe','Mokele-mbembe']
+  ['bigfoot','Bigfoot','Bigfoot'],['mothman','Mothman','Mothman'],['yeti','Yeti','Bigfoot'],
+  ['loch_ness','Loch Ness monster','Lake monsters'],['chupacabra','Chupacabra','Chupacabra'],
+  ['jersey_devil','Jersey Devil','Jersey Devil'],['sea_serpent','sea serpent','Sea creatures'],
+  ['thunderbird','Thunderbird cryptid','Unidentified'],['bunyip','Bunyip','Unidentified'],
+  ['aliens','alien encounter','Aliens'],['ufo','UFO sighting','Aliens'],
+  ['cryptid','cryptozoology','Unidentified'],['ogopogo','Ogopogo','Lake monsters'],
+  ['mokele_mbembe','Mokele-mbembe','Lake monsters'],
+  ['skinwalkers','public skinwalker folklore','Skinwalkers'],
+  ['ghosts','ghost folklore','Ghosts'],
+  ['alien_technologies','UFO technology','Alien technologies'],
+  ['sacred_space_sightings','sacred site sightings','Sacred space sightings'],
+  ['dreamscape','dreamscape folklore','Dreamscape']
 ];
 const LIMIT = 2;
 const BATCH = 12;
@@ -53,9 +58,10 @@ function curated(page, topic) {
   if (filename.length < 5) return null;
   const kind = info.mime.startsWith('video/') ? 'video' : 'image';
   const tag = topic[0];
+  const category = topic[2];
   return {
     id: 'commons-' + page.pageid, source, media, kind,
-    topic: tag, tags: ['content','cryptids',tag],
+    topic: tag, category, tags: [...new Set(['content','cryptids',tag,category.toLowerCase().replace(/\s+/g,'_')])],
     title: filename,
     caption: 'A ' + (kind === 'video' ? 'video' : 'picture') + ' catalogued on Wikimedia Commons in connection with ' +
       topic[1] + '. This source listing is not proof of a cryptid encounter.',
@@ -97,8 +103,8 @@ async function collect(env) {
     const p = curated(page, topic);
     if (!p) continue;
     const result = await env.MEDIA_DB.prepare(
-      "INSERT OR IGNORE INTO sourced_media (id, source_url, media_url, kind, topic, tags_json, title, caption, alt_text, author_credit, license_name, license_url, published_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))"
-    ).bind(p.id,p.source,p.media,p.kind,p.topic,JSON.stringify(p.tags),p.title,p.caption,p.alt,p.author,p.license_name,p.license_url).run();
+      "INSERT OR IGNORE INTO sourced_media (id, source_url, media_url, kind, topic, category, tags_json, title, caption, alt_text, author_credit, license_name, license_url, published_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))"
+    ).bind(p.id,p.source,p.media,p.kind,p.topic,p.category,JSON.stringify(p.tags),p.title,p.caption,p.alt,p.author,p.license_name,p.license_url).run();
     if (result.meta?.changes) added += 1;
   }
   const nextOffset = control.search_offset + BATCH;
@@ -127,12 +133,19 @@ export default {
       const limit = Math.min(30,Math.max(1,Number.parseInt(url.searchParams.get('limit')||'12',10)||12));
       const tag = String(url.searchParams.get('tag')||'').toLowerCase();
       if (tag && !/^[a-z][a-z0-9_]{0,39}$/.test(tag)) return response({error:'Invalid tag'},400);
-      const search = tag && !['content','cryptids'].includes(tag);
-      const sql = 'SELECT id,source_url,media_url,kind,topic,tags_json,title,caption,alt_text,author_credit,license_name,license_url,published_at FROM sourced_media'
-        + (search ? ' WHERE topic=?' : '') + ' ORDER BY published_at DESC,id DESC LIMIT ?';
-      const stmt = env.MEDIA_DB.prepare(sql);
-      const rows = await (search ? stmt.bind(tag,limit) : stmt.bind(limit)).all();
-      return response({posts:(rows.results||[]).map(x=>({...x,hashtags:JSON.parse(x.tags_json||'[]'),tags_json:undefined})),source:'Wikimedia Commons licensed media'});
+      const category = String(url.searchParams.get('category')||'');
+      if (category && !TOPICS.some(x=>x[2]===category)) return response({error:'Invalid category'},400);
+      const clauses = [];
+      const binds = [];
+      if (tag && !['content','cryptids'].includes(tag)) {
+        clauses.push('topic=?');
+        binds.push(tag);
+      }
+      if (category) { clauses.push('category=?'); binds.push(category); }
+      const sql = 'SELECT id,source_url,media_url,kind,topic,category,tags_json,title,caption,alt_text,author_credit,license_name,license_url,published_at FROM sourced_media'
+        + (clauses.length ? ' WHERE '+clauses.join(' AND ') : '') + ' ORDER BY published_at DESC,id DESC LIMIT ?';
+      const rows = await env.MEDIA_DB.prepare(sql).bind(...binds,limit).all();
+      return response({posts:(rows.results||[]).map(x=>({...x,genre:'Reference media',hashtags:JSON.parse(x.tags_json||'[]'),tags_json:undefined})),source:'Wikimedia Commons licensed media'});
     }
     return response({error:'Not found'},404);
   }
