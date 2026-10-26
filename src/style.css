@@ -30,3 +30,19 @@
 .social-profile-links a{display:inline-flex;align-items:center;justify-content:center}
 .content-link{overflow-wrap:anywhere;word-break:break-word}
 @media(max-width:700px){.social-profile-grid{grid-template-columns:minmax(0,1fr)}.social-profile-fields{padding:12px}.social-profile-links a{font-size:12px}}
+
+
+/* Source-backed photos & video posts; original file attribution stays visible. */
+.source-media-feed { margin: 1.25rem 0; }
+.source-media-feed .section-title { display:flex; gap:.65rem; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
+.source-media-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:1rem; }
+.source-media-card { min-width:0; overflow:hidden; }
+.source-media-card h3 { overflow-wrap:anywhere; margin:0 0 .75rem; }
+.source-media-card img, .source-media-card video {
+  display:block; width:100%; max-height:380px; object-fit:contain; background:#13191b;
+  border-radius:10px; margin:.65rem 0 1rem;
+}
+.source-media-credit { font-size:.83rem; line-height:1.55; overflow-wrap:anywhere; }
+.source-media-credit a, .source-media-tags a { text-decoration:underline; text-underline-offset:2px; }
+.source-media-tags { display:flex; flex-wrap:wrap; gap:.55rem; margin:.65rem 0; }
+.source-media-tags a { font-size:.85rem; }
