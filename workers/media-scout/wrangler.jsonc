@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/wrangler.json",
+  "name": "onlycryptids-media-scout",
+  "main": "index.mjs",
+  "compatibility_date": "2026-10-25",
+  "workers_dev": true,
+  "triggers": {
+    "crons": [
+      "*/30 * * * *"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "MEDIA_DB",
+      "database_name": "onlycryptids-media-scout",
+      "database_id": "704c0ac1-bf6d-4227-be9a-f9f90c284619"
+    }
+  ]
+}
