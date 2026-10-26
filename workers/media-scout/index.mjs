@@ -88,7 +88,7 @@ function curatedOpenverse(item, topic) {
   const tag = topic[0], category = topic[2];
   return {
     id:'openverse-'+item.id, source, media, kind:'image',
-    topic:tag, category, tags:[...new Set(['content','cryptids',tag,category.toLowerCase().replace(/\\s+/g,'_')])],
+    topic:tag, category, tags:[...new Set(['content','cryptids',tag,category.toLowerCase().replace(/\s+/g,'_')])],
     title, caption:'A licensed image indexed by Openverse on the subject of '+topic[1]+
       '. This is a credited reference, not confirmation of an encounter.',
     alt:'Licensed source image: '+title, author, license_name:licenseName, license_url:licenseUrl||source
@@ -198,7 +198,7 @@ export default {
       const sql = 'SELECT id,source_url,media_url,kind,topic,category,tags_json,title,caption,alt_text,author_credit,license_name,license_url,published_at FROM sourced_media'
         + (clauses.length ? ' WHERE '+clauses.join(' AND ') : '') + ' ORDER BY published_at DESC,id DESC LIMIT ?';
       const rows = await env.MEDIA_DB.prepare(sql).bind(...binds,limit).all();
-      return response({posts:(rows.results||[]).map(x=>({...x,genre:'Reference media',hashtags:JSON.parse(x.tags_json||'[]'),tags_json:undefined})),source:'Wikimedia Commons licensed media'});
+      return response({posts:(rows.results||[]).map(x=>({...x,genre:'Reference media',hashtags:JSON.parse(x.tags_json||'[]'),tags_json:undefined})),source:'Openly licensed media references'});
     }
     return response({error:'Not found'},404);
   }
