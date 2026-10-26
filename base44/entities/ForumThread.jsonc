@@ -45,6 +45,14 @@
     },
     "subcategory": {
       "type": "string"
+    },
+    "genre": {
+      "type": "string",
+      "enum": [
+        "Fiction",
+        "Non-fiction"
+      ],
+      "description": "Editorial type; Non-fiction includes sourced research and unverified claimed encounters, not proof of a cryptid."
     }
   },
   "required": [
