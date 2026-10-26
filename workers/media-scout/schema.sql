@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS sourced_media (
  media_url TEXT NOT NULL,
  kind TEXT NOT NULL CHECK (kind IN ('image','video')),
  topic TEXT NOT NULL,
+ category TEXT NOT NULL DEFAULT 'Unidentified',
  tags_json TEXT NOT NULL,
  title TEXT NOT NULL,
  caption TEXT NOT NULL,

@@ -5,13 +5,18 @@
  * No paid models, account credentials, or unattended scraping.
  */
 const TOPICS = [
-  ['bigfoot','Bigfoot'],['mothman','Mothman'],['yeti','Yeti'],
-  ['loch_ness','Loch Ness monster'],['chupacabra','Chupacabra'],
-  ['jersey_devil','Jersey Devil'],['sea_serpent','sea serpent'],
-  ['thunderbird','Thunderbird cryptid'],['bunyip','Bunyip'],
-  ['alien','alien encounter'],['ufo','UFO sighting'],
-  ['cryptid','cryptozoology'],['ogopogo','Ogopogo'],
-  ['mokele_mbembe','Mokele-mbembe']
+  ['bigfoot','Bigfoot','Bigfoot'],['mothman','Mothman','Mothman'],['yeti','Yeti','Bigfoot'],
+  ['loch_ness','Loch Ness monster','Lake monsters'],['chupacabra','Chupacabra','Chupacabra'],
+  ['jersey_devil','Jersey Devil','Jersey Devil'],['sea_serpent','sea serpent','Sea creatures'],
+  ['thunderbird','Thunderbird cryptid','Unidentified'],['bunyip','Bunyip','Unidentified'],
+  ['aliens','alien encounter','Aliens'],['ufo','UFO sighting','Aliens'],
+  ['cryptid','cryptozoology','Unidentified'],['ogopogo','Ogopogo','Lake monsters'],
+  ['mokele_mbembe','Mokele-mbembe','Lake monsters'],
+  ['skinwalkers','public skinwalker folklore','Skinwalkers'],
+  ['ghosts','ghost folklore','Ghosts'],
+  ['alien_technologies','UFO technology','Alien technologies'],
+  ['sacred_space_sightings','sacred site sightings','Sacred space sightings'],
+  ['dreamscape','dreamscape folklore','Dreamscape']
 ];
 const LIMIT = 2;
 const BATCH = 12;
@@ -53,9 +58,10 @@ function curated(page, topic) {
   if (filename.length < 5) return null;
   const kind = info.mime.startsWith('video/') ? 'video' : 'image';
   const tag = topic[0];
+  const category = topic[2];
   return {
     id: 'commons-' + page.pageid, source, media, kind,
-    topic: tag, tags: ['content','cryptids',tag],
+    topic: tag, category, tags: [...new Set(['content','cryptids',tag,category.toLowerCase().replace(/\s+/g,'_')])],
     title: filename,
     caption: 'A ' + (kind === 'video' ? 'video' : 'picture') + ' catalogued on Wikimedia Commons in connection with ' +
       topic[1] + '. This source listing is not proof of a cryptid encounter.',
@@ -63,6 +69,50 @@ function curated(page, topic) {
     author, license_name: license.name, license_url: license.url
   };
 }
+// Openverse is an independent openly-licensed image index. Use its public API
+// when Commons refuses automated API access; never bypass the 403.
+function curatedOpenverse(item, topic) {
+  if (!item || item.mature || typeof item.id!=='string' || !/^[a-f0-9-]{36}$/i.test(item.id)) return null;
+  const licenses = {'by':'CC BY', 'by-sa':'CC BY-SA', cc0:'CC0', pdm:'Public domain'};
+  const licenseName = licenses[String(item.license||'').toLowerCase()];
+  if (!licenseName) return null;
+  const source = safeHttps(item.foreign_landing_url);
+  const media = safeHttps(item.url);
+  if (!source || !media) return null;
+  const author = stripMarkup(item.creator,180);
+  if (!author) return null;
+  const licenseUrl = safeHttps(item.license_url);
+  if (!licenseUrl && !['cc0','pdm'].includes(item.license)) return null;
+  const title = stripMarkup(item.title||topic[1],130);
+  if (title.length<5) return null;
+  const tag = topic[0], category = topic[2];
+  return {
+    id:'openverse-'+item.id, source, media, kind:'image',
+    topic:tag, category, tags:[...new Set(['content','cryptids',tag,category.toLowerCase().replace(/\s+/g,'_')])],
+    title, caption:'A licensed image indexed by Openverse on the subject of '+topic[1]+
+      '. This is a credited reference, not confirmation of an encounter.',
+    alt:'Licensed source image: '+title, author, license_name:licenseName, license_url:licenseUrl||source
+  };
+}
+function safeHttps(value) {
+  try {
+    const u=new URL(value);
+    return u.protocol==='https:'&&!u.username&&!u.password?u.href:null;
+  } catch { return null; }
+}
+async function searchOpenverse(topic,offset) {
+  const u=new URL('https://api.openverse.org/v1/images/');
+  u.searchParams.set('q',topic[1]);
+  u.searchParams.set('page_size','12');
+  u.searchParams.set('page',String(Math.floor(offset/BATCH)+1));
+  u.searchParams.set('license','by,by-sa,cc0,pdm');
+  const r=await fetch(u,{headers:{accept:'application/json'},signal:AbortSignal.timeout(15000)});
+  if(!r.ok)throw new Error('Openverse returned HTTP '+r.status);
+  const body=await r.json();
+  return {pages:(body.results||[]).map(x=>curatedOpenverse(x,topic)).filter(Boolean),
+          hasMore:(body.page||0)<(body.page_count||0)};
+}
+
 function response(obj, status = 200) {
   return new Response(JSON.stringify(obj), {status, headers:{
     'content-type':'application/json; charset=utf-8',
@@ -83,26 +133,35 @@ async function collect(env) {
     gsroffset:String(control.search_offset),prop:'imageinfo',
     iiprop:'url|mime|extmetadata',iiextmetadatalanguage:'en'
   })) url.searchParams.set(k,v);
+  let results, hasMore;
   const remote = await fetch(url, {headers:{
     'accept':'application/json',
     'api-user-agent':'OnlyCryptidsMediaScout/1.0 (https://github.com/interplanetarysister/OnlyCryptids)'
   }, signal: AbortSignal.timeout(15000)});
-  if (!remote.ok) throw new Error('Commons returned HTTP ' + remote.status);
-  const payload = await remote.json();
-  if (payload.error) throw new Error('Commons API: ' + stripMarkup(payload.error.info, 120));
-  const pages = Object.values(payload.query?.pages || {});
+  if (remote.status===403) {
+    // Respect the Commons refusal. Openverse provides separate licensed data.
+    const other=await searchOpenverse(topic,control.search_offset);
+    results=other.pages;
+    hasMore=other.hasMore;
+  } else {
+    if (!remote.ok) throw new Error('Commons returned HTTP ' + remote.status);
+    const payload = await remote.json();
+    if (payload.error) throw new Error('Commons API: ' + stripMarkup(payload.error.info, 120));
+    results=Object.values(payload.query?.pages || {}).map(page=>curated(page,topic)).filter(Boolean);
+    hasMore=Boolean(payload.continue?.gsroffset);
+  }
   let added = 0;
-  for (const page of pages) {
+  for (const page of results) {
     if (added >= LIMIT) break;
-    const p = curated(page, topic);
+    const p = page;
     if (!p) continue;
     const result = await env.MEDIA_DB.prepare(
-      "INSERT OR IGNORE INTO sourced_media (id, source_url, media_url, kind, topic, tags_json, title, caption, alt_text, author_credit, license_name, license_url, published_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))"
-    ).bind(p.id,p.source,p.media,p.kind,p.topic,JSON.stringify(p.tags),p.title,p.caption,p.alt,p.author,p.license_name,p.license_url).run();
+      "INSERT OR IGNORE INTO sourced_media (id, source_url, media_url, kind, topic, category, tags_json, title, caption, alt_text, author_credit, license_name, license_url, published_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))"
+    ).bind(p.id,p.source,p.media,p.kind,p.topic,p.category,JSON.stringify(p.tags),p.title,p.caption,p.alt,p.author,p.license_name,p.license_url).run();
     if (result.meta?.changes) added += 1;
   }
   const nextOffset = control.search_offset + BATCH;
-  const exhausted = !payload.continue?.gsroffset || nextOffset > 240;
+  const exhausted = !hasMore || nextOffset > 240;
   await env.MEDIA_DB.prepare(
     "UPDATE scout_control SET term_index=?, search_offset=?, last_run=datetime('now'), last_added=?, last_error=NULL WHERE id=1"
   ).bind(exhausted ? control.term_index + 1 : control.term_index,
@@ -127,12 +186,19 @@ export default {
       const limit = Math.min(30,Math.max(1,Number.parseInt(url.searchParams.get('limit')||'12',10)||12));
       const tag = String(url.searchParams.get('tag')||'').toLowerCase();
       if (tag && !/^[a-z][a-z0-9_]{0,39}$/.test(tag)) return response({error:'Invalid tag'},400);
-      const search = tag && !['content','cryptids'].includes(tag);
-      const sql = 'SELECT id,source_url,media_url,kind,topic,tags_json,title,caption,alt_text,author_credit,license_name,license_url,published_at FROM sourced_media'
-        + (search ? ' WHERE topic=?' : '') + ' ORDER BY published_at DESC,id DESC LIMIT ?';
-      const stmt = env.MEDIA_DB.prepare(sql);
-      const rows = await (search ? stmt.bind(tag,limit) : stmt.bind(limit)).all();
-      return response({posts:(rows.results||[]).map(x=>({...x,hashtags:JSON.parse(x.tags_json||'[]'),tags_json:undefined})),source:'Wikimedia Commons licensed media'});
+      const category = String(url.searchParams.get('category')||'');
+      if (category && !TOPICS.some(x=>x[2]===category)) return response({error:'Invalid category'},400);
+      const clauses = [];
+      const binds = [];
+      if (tag && !['content','cryptids'].includes(tag)) {
+        clauses.push('topic=?');
+        binds.push(tag);
+      }
+      if (category) { clauses.push('category=?'); binds.push(category); }
+      const sql = 'SELECT id,source_url,media_url,kind,topic,category,tags_json,title,caption,alt_text,author_credit,license_name,license_url,published_at FROM sourced_media'
+        + (clauses.length ? ' WHERE '+clauses.join(' AND ') : '') + ' ORDER BY published_at DESC,id DESC LIMIT ?';
+      const rows = await env.MEDIA_DB.prepare(sql).bind(...binds,limit).all();
+      return response({posts:(rows.results||[]).map(x=>({...x,genre:'Reference media',hashtags:JSON.parse(x.tags_json||'[]'),tags_json:undefined})),source:'Openly licensed media references'});
     }
     return response({error:'Not found'},404);
   }
