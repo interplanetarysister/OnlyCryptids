@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS scout_control (
  term_index INTEGER NOT NULL DEFAULT 0,
  search_offset INTEGER NOT NULL DEFAULT 0,
  last_run TEXT,
- last_added INTEGER NOT NULL DEFAULT 0
+ last_added INTEGER NOT NULL DEFAULT 0,
+ last_error TEXT
 );
 INSERT OR IGNORE INTO scout_control(id,enabled) VALUES (1,1);
 CREATE TABLE IF NOT EXISTS sourced_media (
