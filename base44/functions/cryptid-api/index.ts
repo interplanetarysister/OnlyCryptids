@@ -7,6 +7,7 @@ import {buildMonthlyBoards,scoreCategories,starRange} from './leaderboard.js';
 import {cryptidCategories,genres,genreForLabel,genreForRecord,isValidGenreLabel,validSubcategory} from './taxonomy.js';
 import {normalizeSocialProfiles,recognizedNetworks,extractHashtags} from './social-links.js';
 import {handleSocialAction} from './social-actions.js';
+import {skyWitnessAction} from './sky-witness.js';
 
 class RequestError extends Error {status:number;constructor(message:string,status=400){super(message);this.status=status}}
 function text(v:unknown,max:number,required=false){if(typeof v!=='string'||v.length>max||(required&&!v.trim()))throw new RequestError('Please check the required fields and their length.');return v.trim()}
@@ -60,6 +61,7 @@ Deno.serve(async req=>{
   function publicCommunity(c:any){return {id:c.id,name:c.name,slug:c.slug,description:c.description,rules:c.rules,social_links:c.social_links||{}}}
   function offset(v:unknown){const n=Number(v??0);if(!Number.isInteger(n)||n<0||n>10000)throw new RequestError('Invalid page.');return n}
   const ok=(value:any)=>Response.json(value,{headers});
+  if(action.startsWith('sky-'))return await skyWitnessAction({action,data,db,isElevated,headers,RequestError});
 
   // Only app-user grants may authorize member publishing; shared app tokens cannot.
   const metaEnv={facebook:'CRYPTIDS_FACEBOOK_PAGES_APP_USER_CONNECTOR_ID',instagram:'CRYPTIDS_INSTAGRAM_APP_USER_CONNECTOR_ID'};
