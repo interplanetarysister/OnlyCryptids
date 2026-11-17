@@ -11,8 +11,8 @@
     "test": "node --test scripts/ai-policy.test.mjs scripts/social-linking.test.mjs scripts/suffering-economy.test.mjs scripts/category-genre.test.mjs"
   },
   "dependencies": {
-    "@base44/sdk": "^0.8.57",
-    "@base44/vite-plugin": "^1.0.48",
+    "@base44/sdk": "^0.8.62",
+    "@base44/vite-plugin": "^1.0.52",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.61.0",
     "react": "^19.3.1",
