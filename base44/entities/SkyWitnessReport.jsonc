@@ -1,0 +1,98 @@
+{
+  "name": "SkyWitnessReport",
+  "type": "object",
+  "properties": {
+    "headline": {
+      "type": "string"
+    },
+    "topic": {
+      "type": "string"
+    },
+    "event_date": {
+      "type": "string"
+    },
+    "time_of_day": {
+      "type": "string"
+    },
+    "location_region": {
+      "type": "string"
+    },
+    "weather": {
+      "type": "string"
+    },
+    "activity": {
+      "type": "string"
+    },
+    "appearance": {
+      "type": "string"
+    },
+    "object_behavior": {
+      "type": "string"
+    },
+    "altitude": {
+      "type": "string"
+    },
+    "other_witnesses": {
+      "type": "string"
+    },
+    "later_sightings": {
+      "type": "string"
+    },
+    "impact": {
+      "type": "string"
+    },
+    "source_notes": {
+      "type": "string"
+    },
+    "original_account": {
+      "type": "string"
+    },
+    "edited_account": {
+      "type": "string"
+    },
+    "contributor": {
+      "type": "string"
+    },
+    "credit_mode": {
+      "type": "string"
+    },
+    "fictional_coda": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "published",
+        "pending_review",
+        "hidden"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "fingerprint": {
+      "type": "string"
+    },
+    "consent_version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "headline",
+    "topic",
+    "appearance",
+    "object_behavior",
+    "original_account",
+    "edited_account",
+    "contributor",
+    "credit_mode",
+    "status",
+    "consent_version"
+  ],
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}
