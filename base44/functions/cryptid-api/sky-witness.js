@@ -4,6 +4,7 @@ const CONSENT='onlycryptids-sky-witness-report-2026-11-16-v1';
 const TOPICS=['Satellites or unidentified objects','Supercomputers or artificial intelligence','Future technologies','Signals and related experiences'];
 const PUBLIC_FIELDS=['id','headline','topic','event_date','time_of_day','location_region','weather','activity','appearance','object_behavior','altitude','other_witnesses','later_sightings','impact','source_notes','edited_account','contributor','fictional_coda','created_date'];
 const publish=(record)=>Object.fromEntries(PUBLIC_FIELDS.map(k=>[k,record[k]]));
+const PRIVATE_DETAILS=/(?:\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b|\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b|\b\d{1,5}\s+[\w.\s]{3,35}\s(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln)\b)/i;
 const clean=(v,max=1500)=>{if(typeof v!=='string')return '';const s=v.trim();if(s.length>max)throw new RequestError('A field exceeds its character limit.');return s};
 const filled=(v,max)=>{const s=clean(v,max);if(!s)throw new RequestError('Please complete every required observation field.');return s};
 const sha=async text=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))).map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -54,7 +55,7 @@ export async function skyWitnessAction({action,data,db,isElevated,headers,Reques
   const existing=await db.SkyWitnessReport.filter({fingerprint},'-created_date',1);
   if(existing.length)throw new RequestError('This report has already been submitted. Please do not submit duplicates.');
   // Never expose private addresses or contact details automatically; divert those reports to moderation.
-  const includesPrivateDetails=/(?:\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b|\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b|\b\d{1,5}\s+[\w.\s]{3,35}\s(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln)\b)/i.test(edited_account);
+  const includesPrivateDetails=PRIVATE_DETAILS.test(edited_account);
   const suspicious=/(?:https?:\/\/\S+){4,}/i.test(edited_account);
   const status=(includesPrivateDetails||suspicious)?'pending_review':'published';
   const row=await db.SkyWitnessReport.create({...input,edited_account,fingerprint,status,consent_version:CONSENT,reason:status==='published'?'':'Contact or private-location details require moderator review.'});
@@ -70,7 +71,13 @@ export async function skyWitnessAction({action,data,db,isElevated,headers,Reques
   const id=clean(data.id,100);
   const row=await db.SkyWitnessReport.get(id);
   if(!row)throw new RequestError('Report not found.');
-  await db.SkyWitnessReport.update(id,{status:data.status,reason:data.status==='hidden'?'Hidden by moderator':''});
+  const changes={status:data.status,reason:data.status==='hidden'?'Hidden by moderator':''};
+  if(data.status==='published'&&row.status==='pending_review'){
+   const cleanAccount=filled(data.redacted_account,30000);
+   if(PRIVATE_DETAILS.test(cleanAccount))throw new RequestError('Remove personal contacts and exact addresses before approval.');
+   changes.edited_account=cleanAccount;
+  }
+  await db.SkyWitnessReport.update(id,changes);
   return response({id,status:data.status});
  }
  return null;
