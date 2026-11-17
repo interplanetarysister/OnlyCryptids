@@ -46,3 +46,36 @@
 .source-media-credit a, .source-media-tags a { text-decoration:underline; text-underline-offset:2px; }
 .source-media-tags { display:flex; flex-wrap:wrap; gap:.55rem; margin:.65rem 0; }
 .source-media-tags a { font-size:.85rem; }
+
+/* Sky Witness Project: factual encounter archive and story intake. */
+.sky-shell{display:grid;gap:1.25rem;max-width:1020px;margin:0 auto}
+.sky-hero{position:relative;overflow:hidden;border:1px solid rgba(120,220,200,.36);border-radius:22px;background:radial-gradient(circle at 78% 18%,rgba(65,153,165,.22),transparent 36%),radial-gradient(circle at 12% 86%,rgba(85,111,166,.16),transparent 44%),#101d22;padding:clamp(1.2rem,4vw,3rem);box-shadow:inset 0 0 70px rgba(85,160,160,.06)}
+.sky-hero::before{content:'';position:absolute;inset:0;opacity:.32;pointer-events:none;background-image:radial-gradient(#c6fff7 .7px,transparent 1px);background-size:42px 42px}
+.sky-hero>*{position:relative}
+.sky-hero h2{font-size:clamp(2rem,5.5vw,3.7rem);line-height:1.12;max-width:15ch;margin:.8rem 0 1.3rem;color:#eef7f6}
+.sky-hero p{max-width:68ch;line-height:1.75;color:#d1e4e1}
+.sky-call{display:inline-block;margin-top:1rem;background:#b9e4bd;color:#16221b!important;border-radius:10px;padding:.9rem 1.15rem;font-weight:800;text-decoration:none}
+.sky-guidance p{line-height:1.7}
+.sky-form{scroll-margin-top:4rem}
+.sky-form form{display:grid;gap:1.15rem}
+.sky-form form>label,.sky-form .sky-byline label{display:grid;gap:.36rem;font-weight:700}
+.sky-form input:not([type=checkbox]),.sky-form textarea,.sky-form select{width:100%;min-width:0;border:1px solid rgba(156,198,179,.35);border-radius:9px;background:#101d22;color:#f1fcf6;padding:.8rem;font:inherit;box-sizing:border-box}
+.sky-form textarea{resize:vertical}
+.sky-form small{font-size:.8rem;font-weight:400;line-height:1.45;color:#a8bab3}
+.sky-form .check{display:flex;align-items:flex-start;gap:.65rem;font-weight:400;line-height:1.55}
+.sky-form .check input{margin-top:.25rem;flex-shrink:0}
+.sky-byline{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1rem}
+.sky-preview{border:1px dashed rgba(170,220,193,.5);border-radius:12px;padding:1rem}
+.sky-report-story{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;margin:1rem 0;padding:1rem;border-left:3px solid #87c2ac;background:rgba(60,92,81,.14);border-radius:0 10px 10px 0}
+.sky-fictional-coda{background:rgba(117,75,105,.2);border:1px solid rgba(196,138,177,.4);border-radius:12px;padding:1rem;margin:1rem 0}
+.sky-fictional-coda strong{color:#f4c1e2}
+.sky-receipt{display:flex;flex-wrap:wrap;align-items:center;gap:1rem}
+.sky-receipt h3,.sky-receipt p{flex-basis:100%}
+.sky-archive{display:grid;gap:.8rem}
+.sky-archive-item{text-align:left;display:grid;gap:.35rem;width:100%;cursor:pointer}
+.sky-archive-item strong{font-size:1.08rem}
+.sky-quote{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}
+.sky-network-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.5rem;margin:1rem 0}
+.sky-network-grid button{font-size:.86rem}
+.sky-outreach{margin-top:1rem}
+@media(max-width:560px){.sky-hero{padding:1.25rem}.sky-network-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
