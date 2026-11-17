@@ -14,7 +14,7 @@ import {handleSocialAction} from '../base44/functions/cryptid-api/social-actions
 import {handleAIAction} from '../base44/functions/cryptid-api/ai-actions.js';
 import {skyWitnessAction} from '../base44/functions/cryptid-api/sky-witness.js';
 
-let source=await readFile(new URL('../base44/functions/cryptid-api/index.ts',import.meta.url),'utf8');
+let source=await readFile(new URL('../base44/functions/cryptid-api/entry.ts',import.meta.url),'utf8');
 source=source.replace(/^import .*;\n/gm,'');
 const compiled=await transformWithOxc(source,'index.ts',{lang:'ts'});
 let scenarioCount=0;
