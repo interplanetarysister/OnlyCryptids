@@ -8,7 +8,7 @@ import {creditPolicy,creditPacks,creditCost,generationQuote,tipQuote} from '../b
 import {reconcileEarnings} from '../base44/functions/cryptid-api/creator-finance.js';
 import {buildMonthlyBoards,scoreCategories,starRange} from '../base44/functions/cryptid-api/leaderboard.js';
 import {parseContentHash,internalContentLink} from '../src/content-links.js';
-import {cryptidTaxonomy,validSubcategory} from '../base44/functions/cryptid-api/taxonomy.js';
+import {cryptidTaxonomy,cryptidCategories,genres,genreForLabel,genreForRecord,isValidGenreLabel,validSubcategory} from '../base44/functions/cryptid-api/taxonomy.js';
 import {normalizeSocialProfiles,recognizedNetworks,extractHashtags} from '../base44/functions/cryptid-api/social-links.js';
 import {handleSocialAction} from '../base44/functions/cryptid-api/social-actions.js';
 import {handleAIAction} from '../base44/functions/cryptid-api/ai-actions.js';
@@ -36,7 +36,7 @@ async function run(action,payload={},options={}){
  const sandbox={Deno:{serve:fn=>{handler=fn},env:{get:()=>''}},Response,TextEncoder,crypto:webcrypto,console,
   normalizeSocialProfiles,recognizedNetworks,extractHashtags,handleSocialAction,handleAIAction,skyWitnessAction,
   createClientFromRequest:()=>({auth:{me:async()=>user,loginViaEmailPassword:async()=>{if(options.loginResponse)return options.loginResponse;throw new Error('Invalid credentials')}},asServiceRole:{entities:db}}),
-  renderCreatorLicense:()=>'',licenseReady:()=>options.agreementReady===true,licenseVersion:'test',creditPolicy,creditPacks,creditCost,generationQuote,tipQuote,reconcileEarnings,buildMonthlyBoards,scoreCategories,starRange,cryptidTaxonomy,validSubcategory};
+  renderCreatorLicense:()=>'',licenseReady:()=>options.agreementReady===true,licenseVersion:'test',creditPolicy,creditPacks,creditCost,generationQuote,tipQuote,reconcileEarnings,buildMonthlyBoards,scoreCategories,starRange,cryptidTaxonomy,cryptidCategories,genres,genreForLabel,genreForRecord,isValidGenreLabel,validSubcategory};
  vm.runInNewContext(compiled.code,sandbox);
  const response=await handler(new Request('https://example.invalid',{method:'POST',headers:options.headers,body:JSON.stringify({action,...payload})}));
  return {status:response.status,data:await response.json(),writes};
