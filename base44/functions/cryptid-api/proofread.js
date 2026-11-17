@@ -18,7 +18,7 @@ export function proofreadText(value){
   const matches=result.match(pattern);
   if(matches){result=result.replace(pattern,()=>replacement);changes.push(matches.length+' × '+matches[0]+' → '+replacement)}
  }
- result=result.replace(/([.!?])([A-Za-z])/g,'$1 $2');
+ // Never insert spaces inside email addresses, domain names, or source URLs.
  result=result.replace(/(^|[.!?]\s+|\n+)([a-z])/g,(_m,prefix,letter)=>prefix+letter.toUpperCase());
  if(result!==original&&!changes.length)changes.push('Normalized whitespace, punctuation, or sentence capitalization');
  return {text:result,changes,version:SKY_COPYEDIT_VERSION,changed:result!==original};
