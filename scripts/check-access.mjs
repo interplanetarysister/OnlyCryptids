@@ -12,6 +12,7 @@ import {cryptidTaxonomy,validSubcategory} from '../base44/functions/cryptid-api/
 import {normalizeSocialProfiles,recognizedNetworks,extractHashtags} from '../base44/functions/cryptid-api/social-links.js';
 import {handleSocialAction} from '../base44/functions/cryptid-api/social-actions.js';
 import {handleAIAction} from '../base44/functions/cryptid-api/ai-actions.js';
+import {skyWitnessAction} from '../base44/functions/cryptid-api/sky-witness.js';
 
 let source=await readFile(new URL('../base44/functions/cryptid-api/index.ts',import.meta.url),'utf8');
 source=source.replace(/^import .*;\n/gm,'');
@@ -33,7 +34,7 @@ async function run(action,payload={},options={}){
   delete:async(id)=>{writes.push({entity,id,deleted:true})},
  })});
  const sandbox={Deno:{serve:fn=>{handler=fn},env:{get:()=>''}},Response,TextEncoder,crypto:webcrypto,console,
-  normalizeSocialProfiles,recognizedNetworks,extractHashtags,handleSocialAction,handleAIAction,
+  normalizeSocialProfiles,recognizedNetworks,extractHashtags,handleSocialAction,handleAIAction,skyWitnessAction,
   createClientFromRequest:()=>({auth:{me:async()=>user,loginViaEmailPassword:async()=>{if(options.loginResponse)return options.loginResponse;throw new Error('Invalid credentials')}},asServiceRole:{entities:db}}),
   renderCreatorLicense:()=>'',licenseReady:()=>options.agreementReady===true,licenseVersion:'test',creditPolicy,creditPacks,creditCost,generationQuote,tipQuote,reconcileEarnings,buildMonthlyBoards,scoreCategories,starRange,cryptidTaxonomy,validSubcategory};
  vm.runInNewContext(compiled.code,sandbox);
